@@ -38,7 +38,6 @@ class DownloadMagnet(_PluginBase):
     _save_path = None
     _mp_path = None
     _downloader = None
-    # site = None
     torrent_helper = None
     downloader_helper = None
     directory_helper = None
@@ -58,6 +57,7 @@ class DownloadMagnet(_PluginBase):
             # 下载种子
             if self._torrent_urls:
                 for magnet_link in str(self._torrent_urls).split("\n"):
+                    logger.info(f"读取下载链接成功 {magnet_link}")
                     self.__download_magnet(magnet_link)
 
             self.update_config({
