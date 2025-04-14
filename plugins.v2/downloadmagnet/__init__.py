@@ -1,5 +1,6 @@
 from typing import Any, List, Dict, Tuple, Optional
 
+from app.modules.qbittorrent.qbittorrent import Qbittorrent
 from app.core.event import eventmanager, Event
 from app.db.site_oper import SiteOper
 from app.plugins import _PluginBase
@@ -133,7 +134,7 @@ class DownloadMagnet(_PluginBase):
             return
         downloader = service.instance
         if self.downloader_helper.is_downloader("qbittorrent", service=service):
-            torrent = downloader.add_torrent(content=content,
+            torrent = Qbittorrent.add_torrent(content=content,
                                              download_dir=save_path,
                                              is_paused=self._is_paused)
             if not torrent:
