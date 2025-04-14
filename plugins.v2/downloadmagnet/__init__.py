@@ -56,8 +56,8 @@ class DownloadMagnet(_PluginBase):
             self._downloader = config.get("downloader")
 
             # 下载种子
-            if self._magnet_links:
-                for magnet_link in str(self._magnet_links).split("\n"):
+            if self._torrent_urls:
+                for magnet_link in str(self._torrent_urls).split("\n"):
                     self.__download_magnet(magnet_link)
 
             self.update_config({
