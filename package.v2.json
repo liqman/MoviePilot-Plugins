@@ -4,7 +4,8 @@
         "description": "选择下载器，添加磁力任务。",
         "labels": "下载",
         "version": "1.0",
-        "author": "imaliang",
+        "icon": "hhttps://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/download.png",
+        "author": "liqman",
         "level": 1,
         "history": {
             "v1.0": "交互命令下载 /dm 磁力link"
