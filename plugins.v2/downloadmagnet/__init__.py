@@ -72,68 +72,12 @@ class DownloadMagnet(_PluginBase):
         """
         下载磁力链接
         """
-        
-        logger.info(self._downloader)
-        service = self.service_info(self._downloader)
-        download_id = self.__download(service=service,
-                                      content=magnet_link,
-                                      save_path=self._save_path or self._mp_path)
-        logger.info(download_id)
-
-        if download_id:
-            logger.info(f"种子添加下载成功 {magnet_link} 保存位置 {self._save_path or self._mp_path}")
-            return f"种子添加下载成功, 保存位置 {self._save_path or self._mp_path}"
-        else:
-            logger.error(f"种子添加下载失败 {magnet_link} 保存位置 {self._save_path or self._mp_path}")
-            return f"种子添加下载失败, 保存位置 {self._save_path or self._mp_path}"
-
-    def service_info(self, name: str) -> Optional[ServiceInfo]:
-        """
-        服务信息
-        """
-        if not name:
-            logger.warning("尚未配置下载器，请检查配置")
-            return None
-
-        service = self.downloader_helper.get_service(name)
-        if not service or not service.instance:
-            logger.warning(f"获取下载器 {name} 实例失败，请检查配置")
-            return None
-
-        if service.instance.is_inactive():
-            logger.warning(f"下载器 {name} 未连接，请检查配置")
-            return None
-        return service
-
-    def __download(self, service: ServiceInfo, content: str,
-                   save_path: str) -> Optional[str]:
-        """
-        添加下载任务
-        """
-        if not service or not service.instance:
-            return
-        downloader = service.instance
-        log.info(downloader)
-        if self.downloader_helper.is_downloader("qbittorrent", service=service):
-            torrent = Qbittorrent.add_torrent(content=content,
-                                             download_dir=save_path,
+        try:
+            Qbittorrent.add_torrent(content=magnet_link,
+                                             download_dir=self._save_path,
                                              is_paused=self._is_paused)
-            if not torrent:
-                return None
-            else:
-                return torrent
-        elif self.downloader_helper.is_downloader("transmission", service=service):
-            # 添加任务
-            torrent = downloader.add_torrent(content=content,
-                                             download_dir=save_path,
-                                             is_paused=self._is_paused)
-            if not torrent:
-                return None
-            else:
-                return torrent.hashString
-
-        logger.error(f"不支持的下载器类型")
-        return None
+        except Exception as e
+            log.info(e)
 
     def get_state(self) -> bool:
         return self._enabled
