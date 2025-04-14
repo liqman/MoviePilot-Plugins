@@ -97,14 +97,14 @@ class DownloadMagnet(_PluginBase):
                 logger.error(f"缺少参数：{event_data}")
                 return
 
-            site_name, result = self.__download_magnet(args)
+            result = self.__download_magnet(args)
             if not result:
                 self.post_message(channel=event.event_data.get("channel"),
                                   title="添加种子下载失败",
                                   userid=event.event_data.get("user"))
             else:
                 self.post_message(channel=event.event_data.get("channel"),
-                                  title=f"{site_name} {result}",
+                                  title=f" {result}",
                                   userid=event.event_data.get("user"))
 
     def service_info(self, name: str) -> Optional[ServiceInfo]:
