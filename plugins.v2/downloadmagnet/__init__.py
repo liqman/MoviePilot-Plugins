@@ -73,11 +73,12 @@ class DownloadMagnet(_PluginBase):
         下载磁力链接
         """
         
-
+        logger.info(self._downloader)
         service = self.service_info(self._downloader)
         download_id = self.__download(service=service,
                                       content=magnet_link,
                                       save_path=self._save_path or self._mp_path)
+        logger.info(download_id)
 
         if download_id:
             logger.info(f"种子添加下载成功 {magnet_link} 保存位置 {self._save_path or self._mp_path}")
@@ -85,27 +86,6 @@ class DownloadMagnet(_PluginBase):
         else:
             logger.error(f"种子添加下载失败 {magnet_link} 保存位置 {self._save_path or self._mp_path}")
             return f"种子添加下载失败, 保存位置 {self._save_path or self._mp_path}"
-
-    @eventmanager.register(EventType.PluginAction)
-    def remote_sync_one(self, event: Event = None):
-        if event:
-            event_data = event.event_data
-            if not event_data or event_data.get("action") != "download_magnet":
-                return
-            args = event_data.get("arg_str")
-            if not args:
-                logger.error(f"缺少参数：{event_data}")
-                return
-
-            result = self.__download_magnet(args)
-            if not result:
-                self.post_message(channel=event.event_data.get("channel"),
-                                  title="添加种子下载失败",
-                                  userid=event.event_data.get("user"))
-            else:
-                self.post_message(channel=event.event_data.get("channel"),
-                                  title=f" {result}",
-                                  userid=event.event_data.get("user"))
 
     def service_info(self, name: str) -> Optional[ServiceInfo]:
         """
@@ -133,6 +113,7 @@ class DownloadMagnet(_PluginBase):
         if not service or not service.instance:
             return
         downloader = service.instance
+        log.info(downloader)
         if self.downloader_helper.is_downloader("qbittorrent", service=service):
             torrent = Qbittorrent.add_torrent(content=content,
                                              download_dir=save_path,
