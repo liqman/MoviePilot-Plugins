@@ -1,5 +1,6 @@
 from typing import Any, List, Dict, Tuple, Optional
 import logging
+import re
 
 from app.core.event import eventmanager, Event
 from app.plugins import _PluginBase
@@ -13,23 +14,84 @@ from app.core.context import Context
 from app.core.config import settings
 from app.schemas.types import SystemConfigKey
 
-from ownloadmagnetd.magnet_helper import MagnetHelper
+class MagnetHelper:
+    """
+    磁力链接辅助类
+    """
+    @staticmethod
+    def is_magnet_link(text: str) -> bool:
+        """
+        判断是否为磁力链接
+        :param text: 待检测文本
+        :return: True/False
+        """
+        if not text:
+            return False
+        # 匹配磁力链接的正则表达式
+        pattern = r'^magnet:\?xt=urn:btih:[a-zA-Z0-9]{32,40}(&.*)?$'
+        return bool(re.match(pattern, text.strip()))
 
-class ownloadmagnetd(_PluginBase):
+    @staticmethod
+    def extract_hash_from_magnet(magnet_link: str) -> str:
+        """
+        从磁力链接中提取哈希值
+        :param magnet_link: 磁力链接
+        :return: 哈希值
+        """
+        if not magnet_link:
+            return ""
+        
+        match = re.search(r'urn:btih:([a-zA-Z0-9]{32,40})', magnet_link)
+        if match:
+            return match.group(1).lower()
+        return ""
+
+    @staticmethod
+    def get_magnet_info(magnet_link: str) -> dict:
+        """
+        获取磁力链接信息
+        :param magnet_link: 磁力链接
+        :return: 磁力链接信息字典
+        """
+        if not magnet_link:
+            return {}
+        
+        result = {
+            "hash": "",
+            "name": "",
+            "trackers": []
+        }
+        
+        # 提取哈希值
+        result["hash"] = MagnetHelper.extract_hash_from_magnet(magnet_link)
+        
+        # 提取名称
+        name_match = re.search(r'&dn=([^&]+)', magnet_link)
+        if name_match:
+            result["name"] = name_match.group(1)
+        
+        # 提取Tracker
+        trackers = re.findall(r'&tr=([^&]+)', magnet_link)
+        if trackers:
+            result["trackers"] = trackers
+        
+        return result
+
+class MagnetDownloadPlugin(_PluginBase):
     # 插件名称
     plugin_name = "磁力链接下载"
     # 插件描述
     plugin_desc = "通过磁力链接下载文件"
     # 插件图标
-    plugin_icon = "download.png"
+    plugin_icon = "magnet.png"
     # 插件版本
     plugin_version = "1.0"
     # 插件作者
-    plugin_author = "liqman"
+    plugin_author = "ChatGPT"
     # 作者主页
-    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
+    author_url = "https://chat.openai.com"
     # 插件配置项ID前缀
-    plugin_config_prefix = "ownloadmagnetd_"
+    plugin_config_prefix = "magnetdownloadplugin_"
     # 加载顺序
     plugin_order = 29
     # 可使用的用户级别
