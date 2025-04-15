@@ -1,5 +1,5 @@
 {
-    "downloadmagnet": {
+    "MagnetDownloader": {
         "name": "添加磁力链接下载",
         "description": "选择下载器，添加磁力任务。",
         "labels": "下载",
