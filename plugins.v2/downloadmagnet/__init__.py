@@ -87,9 +87,9 @@ class downloadmagnet(_PluginBase):
     # 插件版本
     plugin_version = "1.0"
     # 插件作者
-    plugin_author = "ChatGPT"
+    plugin_author = "liqman"
     # 作者主页
-    author_url = "https://chat.openai.com"
+    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
     # 插件配置项ID前缀
     plugin_config_prefix = "downloadmagnet_"
     # 加载顺序
@@ -259,6 +259,7 @@ class downloadmagnet(_PluginBase):
         """
         dir_conf: List[dict] = self.systemconfig.get(SystemConfigKey.DownloadDirectories)
         dir_conf = [{'title': d.get('name'), 'value': d.get('path')} for d in dir_conf]
+        logger.info(dir_conf)
         return [
             {
                 'component': 'VForm',
