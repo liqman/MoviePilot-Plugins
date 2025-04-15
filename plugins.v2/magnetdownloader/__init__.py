@@ -22,7 +22,7 @@ class MagnetDownloader(_PluginBase):
     # 插件作者
     plugin_author = "liqman"
     # 作者主页
-    author_url = "https://github.com/liqman/MoviePilot-Plugins"
+    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
     # 插件配置项ID前缀
     plugin_config_prefix = "magnetdownloader_"
     # 加载顺序
@@ -199,8 +199,18 @@ class MagnetDownloader(_PluginBase):
         """
         拼装插件配置页面
         """
-        dir_conf: List[dict] = self.systemconfig.get(SystemConfigKey.DownloadDirectories)
-        dir_conf = [{'title': d.get('name'), 'value': d.get('path')} for d in dir_conf]
+        # 获取目录配置
+        dir_conf: List[dict] = self.systemconfig.get(SystemConfigKey.Directories) or []
+        # 获取可用的下载目录
+        download_dirs = []
+        for d in dir_conf:
+            if d.get('download_path'):
+                download_dirs.append({'title': d.get('name'), 'value': d.get('download_path')})
+        
+        # 如果没有有效的下载目录，添加一个提示选项
+        if not download_dirs:
+            download_dirs = [{'title': '请先在系统设置中配置下载目录', 'value': ''}]
+        
         return [
             {
                 'component': 'VForm',
@@ -277,7 +287,7 @@ class MagnetDownloader(_PluginBase):
                                         'props': {
                                             'model': 'save_path',
                                             'label': '保存目录',
-                                            'items': dir_conf
+                                            'items': download_dirs
                                         }
                                     }
                                 ]
