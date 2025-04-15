@@ -1,13 +1,18 @@
+import threading
+from pathlib import Path
+from typing import Any, List, Dict, Tuple, Optional
+
 from app.core.event import eventmanager, Event
 from app.modules.qbittorrent import Qbittorrent
 from app.modules.transmission import Transmission
 from app.plugins import _PluginBase
-from typing import Any, List, Dict, Tuple, Optional
 from app.log import logger
-from app.schemas.types import SystemConfigKey, EventType
+from app.schemas.types import SystemConfigKey, EventType, NotificationType
 from app.utils.string import StringUtils
 from app.schemas import TransferInfo
-from pathlib import Path
+
+# 线程锁
+lock = threading.Lock()
 
 
 class MagnetDownloader(_PluginBase):
@@ -39,6 +44,7 @@ class MagnetDownloader(_PluginBase):
     _category = None
     _tag = None
     _magnet_links = None
+    _notify = True
     qb = None
     tr = None
 
@@ -58,6 +64,7 @@ class MagnetDownloader(_PluginBase):
             self._category = config.get("category")
             self._tag = config.get("tag")
             self._magnet_links = config.get("magnet_links")
+            self._notify = config.get("notify", True)
             
             # 如果配置了磁力链接，尝试批量下载
             if self._magnet_links:
@@ -71,6 +78,7 @@ class MagnetDownloader(_PluginBase):
                 "category": self._category,
                 "tag": self._tag,
                 "is_paused": self._is_paused,
+                "notify": self._notify,
                 "magnet_links": ""  # 清空已处理的链接
             })
 
@@ -133,6 +141,15 @@ class MagnetDownloader(_PluginBase):
 
         if torrent:
             logger.info(f"磁力链接添加下载成功：{magnet_url} 保存位置：{download_path}")
+            
+            # 发送通知
+            if self._notify:
+                self.post_message(
+                    mtype=NotificationType.Download,
+                    title="【磁力链接下载】",
+                    text=f"磁力链接添加下载成功，保存位置：{download_path}"
+                )
+                
             return "磁力链接", f"添加下载成功，保存位置：{download_path}"
         else:
             logger.error(f"磁力链接添加下载失败：{magnet_url}")
@@ -197,7 +214,7 @@ class MagnetDownloader(_PluginBase):
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
         """
-        拼装插件配置页面
+        拼装插件配置页面，需要返回两块数据：1、页面配置；2、数据结构
         """
         # 获取目录配置
         dir_conf: List[dict] = self.systemconfig.get(SystemConfigKey.Directories) or []
@@ -222,7 +239,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 4
+                                    'md': 6
                                 },
                                 'content': [
                                     {
@@ -234,6 +251,22 @@ class MagnetDownloader(_PluginBase):
                                     }
                                 ]
                             },
+                            {
+                                'component': 'VCol',
+                                'props': {
+                                    'cols': 12,
+                                    'md': 6
+                                },
+                                'content': [
+                                    {
+                                        'component': 'VSwitch',
+                                        'props': {
+                                            'model': 'notify',
+                                            'label': '发送通知',
+                                        }
+                                    }
+                                ]
+                            }
                         ]
                     },
                     {
@@ -243,7 +276,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -263,7 +296,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 3
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -279,7 +312,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 6
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -382,6 +415,7 @@ class MagnetDownloader(_PluginBase):
             }
         ], {
             "enabled": False,
+            "notify": True,
             "downloader": "qb",
             "is_paused": False,
             "save_path": None,
