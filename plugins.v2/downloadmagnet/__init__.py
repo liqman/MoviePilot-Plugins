@@ -198,7 +198,7 @@ class downloadmagnet(_PluginBase):
                                   title=result,
                                   userid=event.event_data.get("user"))
 
-    @eventmanager.register(EventType.PluginMessage)
+    @eventmanager.register(EventType.PluginAction)
     def on_plugin_message(self, event: Event = None):
         """
         处理插件消息
