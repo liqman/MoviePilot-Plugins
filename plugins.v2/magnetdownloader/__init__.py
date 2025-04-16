@@ -1,199 +1,98 @@
-import threading
-from pathlib import Path
-from typing import Any, List, Dict, Tuple, Optional
-
 from app.core.event import eventmanager, Event
 from app.modules.qbittorrent import Qbittorrent
 from app.modules.transmission import Transmission
 from app.plugins import _PluginBase
+from typing import Any, List, Dict, Tuple
 from app.log import logger
-from app.schemas.types import SystemConfigKey, EventType, NotificationType
+from app.schemas.types import EventType
 from app.utils.string import StringUtils
-from app.schemas import TransferInfo
-
-# 线程锁
-lock = threading.Lock()
-
 
 class MagnetDownloader(_PluginBase):
-    # 插件名称
     plugin_name = "磁力链接下载"
-    # 插件描述
-    plugin_desc = "下载磁力链接(magnet)，支持qBittorrent和Transmission下载器。"
-    # 插件图标
-    plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/download.png"
-    # 插件版本
+    plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
+    plugin_icon = "magnet.png"
     plugin_version = "1.0"
-    # 插件作者
     plugin_author = "liqman"
-    # 作者主页
     author_url = "https://github.com/liqman/MoviePilot-Plugins/"
-    # 插件配置项ID前缀
     plugin_config_prefix = "magnetdownloader_"
-    # 加载顺序
-    plugin_order = 29
-    # 可使用的用户级别
+    plugin_order = 30
     auth_level = 1
 
-    # 私有属性
     _downloader = None
     _is_paused = False
     _enabled = False
     _save_path = None
-    _mp_path = None
-    _category = None
-    _tag = None
-    _magnet_links = None
-    _notify = True
+    _magnet_url = None
     qb = None
     tr = None
 
     def init_plugin(self, config: dict = None):
-        """
-        插件初始化
-        """
         self.qb = Qbittorrent()
         self.tr = Transmission()
-
         if config:
             self._enabled = config.get("enabled")
             self._downloader = config.get("downloader")
             self._is_paused = config.get("is_paused")
             self._save_path = config.get("save_path")
-            self._mp_path = config.get("mp_path")
-            self._category = config.get("category")
-            self._tag = config.get("tag")
-            self._magnet_links = config.get("magnet_links")
-            self._notify = config.get("notify", True)
-            
-            # 如果配置了磁力链接，尝试批量下载
-            if self._magnet_links:
-                self.batch_download_magnets(self._magnet_links)
-
+            self._magnet_url = config.get("magnet_url")
+            # 自动下载
+            if self._magnet_url:
+                for magnet_url in str(self._magnet_url).split("\n"):
+                    self.__download_magnet(magnet_url)
             self.update_config({
                 "downloader": self._downloader,
                 "enabled": self._enabled,
                 "save_path": self._save_path,
-                "mp_path": self._mp_path,
-                "category": self._category,
-                "tag": self._tag,
-                "is_paused": self._is_paused,
-                "notify": self._notify,
-                "magnet_links": ""  # 清空已处理的链接
+                "is_paused": self._is_paused
             })
 
-    def batch_download_magnets(self, magnet_links_text: str):
-        """
-        批量下载磁力链接
-        """
-        if not magnet_links_text:
-            return
-            
-        # 按行分割多个链接
-        magnet_links = magnet_links_text.strip().split('\n')
-        success_count = 0
-        failed_count = 0
-        
-        for magnet_link in magnet_links:
-            if not magnet_link.strip():
-                continue
-                
-            # 下载单个磁力链接
-            _, result = self.download_magnet(magnet_link.strip())
-            if "失败" not in result:
-                success_count += 1
-            else:
-                failed_count += 1
-                
-        # 记录日志
-        if success_count > 0:
-            logger.info(f"批量添加磁力链接任务完成，成功：{success_count}，失败：{failed_count}")
-
-    def download_magnet(self, magnet_url: str) -> Tuple[str, str]:
+    def __download_magnet(self, magnet_url: str):
         """
         下载磁力链接
         """
-        # 验证磁力链接格式
         if not StringUtils.is_magnet_url(magnet_url):
-            logger.error(f"无效的磁力链接格式：{magnet_url}")
-            return None, "无效的磁力链接格式"
-
-        download_path = self._save_path or self._mp_path
-        
-        # 添加下载任务
+            logger.error(f"无效的磁力链接：{magnet_url}")
+            return False, "无效的磁力链接"
         if str(self._downloader) == "qb":
-            # qBittorrent下载
-            torrent = self.qb.add_torrent(
-                content=magnet_url,
-                download_dir=download_path,
-                category=self._category,
-                tags=[self._tag] if self._tag else None,
-                is_paused=self._is_paused
-            )
+            result = self.qb.add_torrent(content=magnet_url,
+                                         is_paused=self._is_paused,
+                                         download_dir=self._save_path)
         else:
-            # Transmission下载
-            torrent = self.tr.add_torrent(
-                content=magnet_url,
-                download_dir=download_path,
-                is_paused=self._is_paused,
-                labels=[self._tag] if self._tag else None
-            )
-
-        if torrent:
-            logger.info(f"磁力链接添加下载成功：{magnet_url} 保存位置：{download_path}")
-            
-            # 发送通知
-            if self._notify:
-                self.post_message(
-                    mtype=NotificationType.Download,
-                    title="【磁力链接下载】",
-                    text=f"磁力链接添加下载成功，保存位置：{download_path}"
-                )
-                
-            return "磁力链接", f"添加下载成功，保存位置：{download_path}"
+            result = self.tr.add_torrent(content=magnet_url,
+                                         is_paused=self._is_paused,
+                                         download_dir=self._save_path)
+        if result:
+            logger.info(f"磁力链接添加下载成功 {magnet_url} 保存位置 {self._save_path}")
+            return True, f"磁力链接添加下载成功, 保存位置 {self._save_path}"
         else:
-            logger.error(f"磁力链接添加下载失败：{magnet_url}")
-            return "磁力链接", "添加下载失败"
+            logger.error(f"磁力链接添加下载失败 {magnet_url} 保存位置 {self._save_path}")
+            return False, f"磁力链接添加下载失败, 保存位置 {self._save_path}"
 
     @eventmanager.register(EventType.PluginAction)
-    def download_magnet_action(self, event: Event = None):
-        """
-        响应插件动作事件
-        """
-        if not event:
-            return
-            
-        event_data = event.event_data
-        if not event_data or event_data.get("action") != "download_magnet":
-            return
-            
-        args = event_data.get("args")
-        if not args:
-            logger.error(f"缺少参数：{event_data}")
-            return
-
-        # 执行磁力链接下载
-        _, result = self.download_magnet(args)
-        if "失败" in result:
-            self.post_message(channel=event.event_data.get("channel"),
-                              title="添加磁力链接下载失败",
-                              userid=event.event_data.get("user"))
-        else:
-            self.post_message(channel=event.event_data.get("channel"),
-                              title=f"磁力链接 {result}",
-                              userid=event.event_data.get("user"))
+    def remote_sync_one(self, event: Event = None):
+        if event:
+            event_data = event.event_data
+            if not event_data or event_data.get("action") != "magnet_download":
+                return
+            args = event_data.get("args")
+            if not args:
+                logger.error(f"缺少参数：{event_data}")
+                return
+            success, result = self.__download_magnet(args)
+            if not success:
+                self.post_message(channel=event.event_data.get("channel"),
+                                  title="磁力链接下载失败",
+                                  userid=event.event_data.get("user"))
+            else:
+                self.post_message(channel=event.event_data.get("channel"),
+                                  title=f"{result}",
+                                  userid=event.event_data.get("user"))
 
     def get_state(self) -> bool:
-        """
-        获取插件状态
-        """
         return self._enabled
 
     @staticmethod
     def get_command() -> List[Dict[str, Any]]:
-        """
-        注册命令
-        """
         return [
             {
                 "cmd": "/magnet",
@@ -201,33 +100,18 @@ class MagnetDownloader(_PluginBase):
                 "desc": "磁力链接下载",
                 "category": "",
                 "data": {
-                    "action": "download_magnet"
+                    "action": "magnet_download"
                 }
             }
         ]
 
     def get_api(self) -> List[Dict[str, Any]]:
-        """
-        注册API
-        """
-        pass
+        # 可扩展API，如有需要
+        return []
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
-        """
-        拼装插件配置页面，需要返回两块数据：1、页面配置；2、数据结构
-        """
-        # 获取目录配置
-        dir_conf: List[dict] = self.systemconfig.get(SystemConfigKey.Directories) or []
-        # 获取可用的下载目录
-        download_dirs = []
-        for d in dir_conf:
-            if d.get('download_path'):
-                download_dirs.append({'title': d.get('name'), 'value': d.get('download_path')})
-        
-        # 如果没有有效的下载目录，添加一个提示选项
-        if not download_dirs:
-            download_dirs = [{'title': '请先在系统设置中配置下载目录', 'value': ''}]
-        
+        dir_conf: List[dict] = self.systemconfig.get("DownloadDirectories")
+        dir_conf = [{'title': d.get('name'), 'value': d.get('path')} for d in dir_conf] if dir_conf else []
         return [
             {
                 'component': 'VForm',
@@ -239,7 +123,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 6
+                                    'md': 4
                                 },
                                 'content': [
                                     {
@@ -251,22 +135,6 @@ class MagnetDownloader(_PluginBase):
                                     }
                                 ]
                             },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'notify',
-                                            'label': '发送通知',
-                                        }
-                                    }
-                                ]
-                            }
                         ]
                     },
                     {
@@ -276,7 +144,7 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 4
+                                    'md': 3
                                 },
                                 'content': [
                                     {
@@ -285,8 +153,8 @@ class MagnetDownloader(_PluginBase):
                                             'model': 'downloader',
                                             'label': '下载器',
                                             'items': [
-                                                {'title': 'qBittorrent', 'value': 'qb'},
-                                                {'title': 'Transmission', 'value': 'tr'}
+                                                {'title': 'qb', 'value': 'qb'},
+                                                {'title': 'tr', 'value': 'tr'}
                                             ]
                                         }
                                     }
@@ -296,53 +164,15 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 4
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'is_paused',
-                                            'label': '暂停下载',
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 4
+                                    'md': 6
                                 },
                                 'content': [
                                     {
                                         'component': 'VSelect',
                                         'props': {
                                             'model': 'save_path',
-                                            'label': '保存目录',
-                                            'items': download_dirs
-                                        }
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12,
-                                    'md': 6
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'category',
-                                            'label': '分类',
-                                            'placeholder': '可选，用于qBittorrent'
+                                            'label': '保存路径',
+                                            'items': dir_conf
                                         }
                                     }
                                 ]
@@ -351,43 +181,18 @@ class MagnetDownloader(_PluginBase):
                                 'component': 'VCol',
                                 'props': {
                                     'cols': 12,
-                                    'md': 6
+                                    'md': 3
                                 },
                                 'content': [
                                     {
-                                        'component': 'VTextField',
+                                        'component': 'VSwitch',
                                         'props': {
-                                            'model': 'tag',
-                                            'label': '标签',
-                                            'placeholder': '可选，用于下载器分类'
+                                            'model': 'is_paused',
+                                            'label': '添加后暂停',
                                         }
                                     }
                                 ]
-                            }
-                        ]
-                    },
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {
-                                    'cols': 12
-                                },
-                                'content': [
-                                    {
-                                        'component': 'VTextarea',
-                                        'props': {
-                                            'model': 'magnet_links',
-                                            'label': '批量添加磁力链接',
-                                            'placeholder': '每行一个磁力链接，格式：magnet:?xt=urn:btih:...',
-                                            'rows': 5,
-                                            'hint': '输入多个磁力链接，每行一个，保存配置后会自动添加到下载器',
-                                            'persistent-hint': True
-                                        }
-                                    }
-                                ]
-                            }
+                            },
                         ]
                     },
                     {
@@ -400,11 +205,11 @@ class MagnetDownloader(_PluginBase):
                                 },
                                 'content': [
                                     {
-                                        'component': 'VAlert',
+                                        'component': 'VTextarea',
                                         'props': {
-                                            'type': 'info',
-                                            'variant': 'tonal',
-                                            'text': '磁力链接格式必须以magnet:?xt=urn:开头。自定义保存路径优先级高于MoviePilot保存路径。'
+                                            'model': 'magnet_url',
+                                            'label': '磁力链接（支持多行，每行一个）',
+                                            'placeholder': 'magnet:?xt=urn:btih:...'
                                         }
                                     }
                                 ]
@@ -415,24 +220,16 @@ class MagnetDownloader(_PluginBase):
             }
         ], {
             "enabled": False,
-            "notify": True,
             "downloader": "qb",
+            "save_path": "",
             "is_paused": False,
-            "save_path": None,
-            "mp_path": None,
-            "category": None,
-            "tag": None,
-            "magnet_links": ""
+            "magnet_url": ""
         }
 
     def get_page(self) -> List[dict]:
-        """
-        拼装插件详情页面
-        """
+        # 可扩展详情页
         return []
 
     def stop_service(self):
-        """
-        停止服务
-        """
+        # 可扩展停止逻辑
         pass 
