@@ -13,10 +13,10 @@ import time
 class MagnetDownloader(_PluginBase):
     plugin_name = "磁力链接下载"
     plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
-    plugin_icon = "https://github.com/liqman/MoviePilot-Plugins/blob/main/icons/download.png"
+    plugin_icon = "magnet.png"
     plugin_version = "1.0"
-    plugin_author = "liqman"
-    author_url = "https://github.com/liqman/MoviePilot-Plugins"
+    plugin_author = "your_name"
+    author_url = "https://github.com/your_github"
     plugin_config_prefix = "magnetdownloader_"
     plugin_order = 30
     auth_level = 1
@@ -164,6 +164,9 @@ class MagnetDownloader(_PluginBase):
             if not event_data or event_data.get("action") != "magnet_download":
                 return
             args = event_data.get("args")
+            if not args:
+                # 兼容命令行 arg_str
+                args = event_data.get("arg_str")
             if not args:
                 logger.error(f"缺少参数：{event_data}")
                 return
