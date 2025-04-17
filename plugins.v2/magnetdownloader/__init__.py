@@ -15,8 +15,8 @@ class MagnetDownloader(_PluginBase):
     plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
     plugin_icon = "magnet.png"
     plugin_version = "1.0"
-    plugin_author = "liqman"
-    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
+    plugin_author = "your_name"
+    author_url = "https://github.com/your_github"
     plugin_config_prefix = "magnetdownloader_"
     plugin_order = 30
     auth_level = 1
@@ -204,212 +204,244 @@ class MagnetDownloader(_PluginBase):
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
         dir_conf: List[dict] = self.systemconfig.get("DownloadDirectories")
         dir_conf = [{'title': d.get('name'), 'value': d.get('path')} for d in dir_conf] if dir_conf else []
-        return [
+        form_content = [
+            # 启用插件开关单独一行，放最上面
             {
-                'component': 'VForm',
+                'component': 'VRow',
                 'content': [
-                    # 启用插件开关单独一行，放最上面
                     {
-                        'component': 'VRow',
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 4},
                         'content': [
                             {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 4},
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'enabled',
-                                            'label': '启用插件',
-                                        }
-                                    }
-                                ]
-                            },
-                        ]
-                    },
-                    # 第一行：下载器、下载器URL、下载器用户名、下载器密码
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VSelect',
-                                        'props': {
-                                            'model': 'downloader',
-                                            'label': '下载器',
-                                            'items': [
-                                                {'title': 'qb', 'value': 'qb'},
-                                                {'title': 'tr', 'value': 'tr'}
-                                            ]
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'downloader_url',
-                                            'label': '下载器URL',
-                                            'placeholder': 'http://127.0.0.1:8080/ 或 http://127.0.0.1:9091/transmission/rpc'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'downloader_username',
-                                            'label': '下载器用户名',
-                                            'placeholder': 'admin'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'downloader_password',
-                                            'label': '下载器密码',
-                                            'type': 'password',
-                                            'placeholder': 'password'
-                                        }
-                                    }
-                                ]
-                            },
-                        ]
-                    },
-                    # 第二行：保存路径、种子分类、种子上传限速、添加后暂停
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'save_path',
-                                            'label': '保存路径',
-                                            'placeholder': '/downloads/path'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'category',
-                                            'label': '种子分类',
-                                            'placeholder': '如：movie, tv, anime'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VTextField',
-                                        'props': {
-                                            'model': 'upload_limit',
-                                            'label': '种子上传限速(KB/s)',
-                                            'type': 'number',
-                                            'placeholder': '0为不限速'
-                                        }
-                                    }
-                                ]
-                            },
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 3},
-                                'content': [
-                                    {
-                                        'component': 'VSwitch',
-                                        'props': {
-                                            'model': 'is_paused',
-                                            'label': '添加后暂停',
-                                        }
-                                    }
-                                ]
-                            },
-                        ]
-                    },
-                    # 磁力链接输入框
-                    {
-                        'component': 'VRow',
-                        'content': [
-                            {
-                                'component': 'VCol',
-                                'props': {'cols': 12},
-                                'content': [
-                                    {
-                                        'component': 'VTextarea',
-                                        'props': {
-                                            'model': 'magnet_url',
-                                            'label': '磁力链接（支持多行，每行一个）',
-                                            'placeholder': 'magnet:?xt=urn:btih:...'
-                                        }
-                                    }
-                                ]
+                                'component': 'VSwitch',
+                                'props': {
+                                    'model': 'enabled',
+                                    'label': '启用插件',
+                                }
                             }
                         ]
                     },
-                    # tracker list 相关
+                ]
+            },
+            # 第一行：下载器、下载器URL、下载器用户名、下载器密码
+            {
+                'component': 'VRow',
+                'content': [
                     {
-                        'component': 'VRow',
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
                         'content': [
                             {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 2},
-                                'content': [
-                                    {
-                                        'component': 'VCheckbox',
-                                        'props': {
-                                            'model': 'use_default_tracker',
-                                            'label': '使用推荐Tracker列表',
-                                        }
-                                    }
-                                ]
-                            },
+                                'component': 'VSelect',
+                                'props': {
+                                    'model': 'downloader',
+                                    'label': '下载器',
+                                    'items': [
+                                        {'title': 'qb', 'value': 'qb'},
+                                        {'title': 'tr', 'value': 'tr'}
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
                             {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 10},
-                                'content': [
-                                    {
-                                        'component': 'VTextarea',
-                                        'props': {
-                                            'model': 'tracker_list',
-                                            'label': '自定义Tracker列表（每行一个）',
-                                            'placeholder': 'http://tracker.example/announce',
-                                            'v-if': '!use_default_tracker'
-                                        }
-                                    }
-                                ]
-                            },
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'downloader_url',
+                                    'label': '下载器URL',
+                                    'placeholder': 'http://127.0.0.1:8080/ 或 http://127.0.0.1:9091/transmission/rpc'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'downloader_username',
+                                    'label': '下载器用户名',
+                                    'placeholder': 'admin'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'downloader_password',
+                                    'label': '下载器密码',
+                                    'type': 'password',
+                                    'placeholder': 'password'
+                                }
+                            }
                         ]
                     },
                 ]
+            },
+            # 第二行：保存路径、种子分类、种子上传限速、添加后暂停
+            {
+                'component': 'VRow',
+                'content': [
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'save_path',
+                                    'label': '保存路径',
+                                    'placeholder': '/downloads/path'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'category',
+                                    'label': '种子分类',
+                                    'placeholder': '如：movie, tv, anime'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VTextField',
+                                'props': {
+                                    'model': 'upload_limit',
+                                    'label': '种子上传限速(KB/s)',
+                                    'type': 'number',
+                                    'placeholder': '0为不限速'
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 3},
+                        'content': [
+                            {
+                                'component': 'VSwitch',
+                                'props': {
+                                    'model': 'is_paused',
+                                    'label': '添加后暂停',
+                                }
+                            }
+                        ]
+                    },
+                ]
+            },
+            # 磁力链接输入框
+            {
+                'component': 'VRow',
+                'content': [
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12},
+                        'content': [
+                            {
+                                'component': 'VTextarea',
+                                'props': {
+                                    'model': 'magnet_url',
+                                    'label': '磁力链接（支持多行，每行一个）',
+                                    'placeholder': 'magnet:?xt=urn:btih:...'
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            # tracker list 相关
+            {
+                'component': 'VRow',
+                'content': [
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 2},
+                        'content': [
+                            {
+                                'component': 'VCheckbox',
+                                'props': {
+                                    'model': 'use_default_tracker',
+                                    'label': '使用推荐Tracker列表',
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        'component': 'VCol',
+                        'props': {'cols': 12, 'md': 10},
+                        'content': [
+                            {
+                                'component': 'VTextarea',
+                                'props': {
+                                    'model': 'tracker_list',
+                                    'label': '自定义Tracker列表（每行一个）',
+                                    'placeholder': 'http://tracker.example/announce',
+                                    'v-if': '!use_default_tracker'
+                                }
+                            }
+                        ]
+                    },
+                ]
+            },
+        ]
+        # 在最后插入VAlert
+        form_content.append({
+            "component": "VCol",
+            "props": {
+                "cols": 12,
+            },
+            "content": [
+                {
+                    "component": "VAlert",
+                    "props": {
+                        "type": "info",
+                        "variant": "tonal",
+                        "text": "下载器URL : 格式为 http://127.0.0.1:8080/ , 保留最后的/"
+                    },
+                },{
+                    "component": "VAlert",
+                    "props": {
+                        "type": "info",
+                        "variant": "tonal",
+                        "text": "使用推荐Tracker列表, 请确保Github可访问"
+                    },
+                },{
+                    "component": "VAlert",
+                    "props": {
+                        "type": "info",
+                        "variant": "tonal",
+                        "text": "自定义Tracker可从 https://github.com/ngosang/trackerslist 获取"
+                    },
+                }
+            ],
+        })
+        return [
+            {
+                'component': 'VForm',
+                'content': form_content
             }
         ], {
             "enabled": False,
