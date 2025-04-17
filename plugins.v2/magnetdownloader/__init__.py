@@ -15,8 +15,8 @@ class MagnetDownloader(_PluginBase):
     plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
     plugin_icon = "magnet.png"
     plugin_version = "1.0"
-    plugin_author = "your_name"
-    author_url = "https://github.com/your_github"
+    plugin_author = "liqman"
+    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
     plugin_config_prefix = "magnetdownloader_"
     plugin_order = 30
     auth_level = 1
@@ -103,7 +103,7 @@ class MagnetDownloader(_PluginBase):
         if getattr(self, '_use_default_tracker', True):
             try:
                 resp = requests.get("https://raw.githubusercontent.com/ngosang/trackerslist/refs/heads/master/trackers_best.txt", timeout=10)
-                logger.info(f'请求推荐tracker状态: {resp.status_code}, ok: {resp.ok}')
+                # logger.info(f'请求推荐tracker状态: {resp.status_code}, ok: {resp.ok}')
                 if resp.ok:
                     recommend_tracker_list = [line.strip() for line in resp.text.splitlines() if line.strip()]
                     logger.info(f'获取到推荐tracker数量: {len(recommend_tracker_list)}')
@@ -117,7 +117,7 @@ class MagnetDownloader(_PluginBase):
         for t in all_trackers:
             if t not in tracker_list:
                 tracker_list.append(t)
-        logger.info(f'最终拼接到磁力链接的tracker: {tracker_list}')
+        #logger.info(f'最终拼接到磁力链接的tracker: {tracker_list}')
         # 拼接tracker到磁力链接
         if tracker_list:
             magnet_url = self.append_trackers_to_magnet(magnet_url, tracker_list)
@@ -130,7 +130,7 @@ class MagnetDownloader(_PluginBase):
                 upload_limit = None
         try:
             if str(self._downloader) == "qb":
-                logger.info(f'Qbittorrent配置: url={repr(self._downloader_url)}, username={repr(self._downloader_username)}, password={repr(self._downloader_password)}')
+                # logger.info(f'Qbittorrent配置: url={repr(self._downloader_url)}, username={repr(self._downloader_username)}, password={repr(self._downloader_password)}')
                 host, port = self.parse_host_port(self._downloader_url)
                 qb = Qbittorrent(host=host, port=port, username=self._downloader_username, password=self._downloader_password)
                 result = qb.add_torrent(content=magnet_url,
@@ -151,10 +151,10 @@ class MagnetDownloader(_PluginBase):
             logger.error(f'add_torrent exception: {e}')
             return False, f'添加下载异常: {e}'
         if result:
-            logger.info(f"磁力链接添加下载成功 {magnet_url} 保存位置 {self._save_path}")
+            logger.info(f"磁力链接添加下载成功, 保存位置 {self._save_path}")
             return True, f"磁力链接添加下载成功, 保存位置 {self._save_path}"
         else:
-            logger.error(f"磁力链接添加下载失败 {magnet_url} 保存位置 {self._save_path}")
+            logger.error(f"磁力链接添加下载失败, 保存位置 {self._save_path}")
             return False, f"磁力链接添加下载失败, 保存位置 {self._save_path}"
 
     @eventmanager.register(EventType.PluginAction)
@@ -173,7 +173,7 @@ class MagnetDownloader(_PluginBase):
             success, result = self.__download_magnet(args)
             if not success:
                 self.post_message(channel=event.event_data.get("channel"),
-                                  title="磁力链接下载失败",
+                                  title="磁力链接下载失败, 请确认磁力链接有效性！",
                                   userid=event.event_data.get("user"))
             else:
                 self.post_message(channel=event.event_data.get("channel"),
@@ -187,7 +187,7 @@ class MagnetDownloader(_PluginBase):
     def get_command() -> List[Dict[str, Any]]:
         return [
             {
-                "cmd": "/magnet",
+                "cmd": "/dm",
                 "event": EventType.PluginAction,
                 "desc": "磁力链接下载",
                 "category": "",
