@@ -7,6 +7,7 @@
 - 支持qBittorrent和Transmission下载器
 - 支持配置自定义保存路径
 - 支持通过命令下载磁力链接
+- 支持自定义Tracker
 
 ## 使用方法
 
