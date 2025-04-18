@@ -16,7 +16,7 @@ class MagnetDownloader(_PluginBase):
     plugin_icon = "magnet.png"
     plugin_version = "1.0"
     plugin_author = "liqman"
-    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
+    author_url = "https://github.com/liqman"
     plugin_config_prefix = "magnetdownloader_"
     plugin_order = 30
     auth_level = 1
