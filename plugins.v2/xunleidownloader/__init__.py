@@ -21,7 +21,6 @@ class XunleiDownloader(_PluginBase):
     _Authorization = ''
     _COOKIE_STR = ''
     _magnet_url = ''
-    _downloads_path = ''
 
     def init_plugin(self, config: dict = None):
         if config:
@@ -31,7 +30,6 @@ class XunleiDownloader(_PluginBase):
             self._Authorization = config.get("Authorization", "")
             self._COOKIE_STR = config.get("COOKIE_STR", "")
             self._magnet_url = config.get("magnet_url", "")
-            self._downloads_path = config.get("downloads_path", "/downloads/")
             # 自动下载
             if self._magnet_url:
                 for magnet_url in str(self._magnet_url).split("\n"):
@@ -43,8 +41,7 @@ class XunleiDownloader(_PluginBase):
                 "PAN_AUTH": self._PAN_AUTH,
                 "Authorization": self._Authorization,
                 "COOKIE_STR": self._COOKIE_STR,
-                "magnet_url": self._magnet_url,
-                "downloads_path": self._downloads_path
+                "magnet_url": self._magnet_url
             })
 
     def get_state(self) -> bool:
@@ -88,7 +85,7 @@ class XunleiDownloader(_PluginBase):
                     },
                 ]
             },
-            # API地址和下载路径同一行
+            # 迅雷Docker地址和Authorization同一行
             {
                 'component': 'VRow',
                 'content': [
@@ -113,9 +110,9 @@ class XunleiDownloader(_PluginBase):
                             {
                                 'component': 'VTextField',
                                 'props': {
-                                    'model': 'downloads_path',
-                                    'label': '下载文件夹路径',
-                                    'placeholder': '/downloads/'
+                                    'model': 'Authorization',
+                                    'label': 'Authorization值',
+                                    'placeholder': 'Basic ...'
                                 }
                             }
                         ]
@@ -136,26 +133,6 @@ class XunleiDownloader(_PluginBase):
                                     'model': 'PAN_AUTH',
                                     'label': 'pan-auth值',
                                     'placeholder': 'pan-auth令牌'
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-            # Authorization单独一行
-            {
-                'component': 'VRow',
-                'content': [
-                    {
-                        'component': 'VCol',
-                        'props': {'cols': 12},
-                        'content': [
-                            {
-                                'component': 'VTextField',
-                                'props': {
-                                    'model': 'Authorization',
-                                    'label': 'Authorization值',
-                                    'placeholder': 'Basic ...'
                                 }
                             }
                         ]
@@ -202,7 +179,7 @@ class XunleiDownloader(_PluginBase):
                     }
                 ]
             },
-            # 插入VAlert
+            # 插入VAlert（去除下载路径相关提示）
             {
                 'component': 'VRow',
                 'content': [
@@ -210,37 +187,30 @@ class XunleiDownloader(_PluginBase):
                         'component': 'VCol',
                         'props': {'cols': 12},
                         'content': [
-                                {
-                        "component": "VAlert",
-                        "props": {
-                            "type": "info",
-                            "variant": "tonal",
-                            "text": "基于迅雷Docker项目 https://github.com/cnk3x/xunlei, 请先确认迅雷Docker是否正常运行, 登录后台F12抓取下列所需参数"
-                        },
-                        },{
-                            "component": "VAlert",
-                            "props": {
-                                "type": "info",
-                                "variant": "tonal",
-                                "text": "迅雷Docker地址 : 格式为 http://192.168.1.200:4321 , 不要保留最后的/"
-                        },
-                        },{
-                            "component": "VAlert",
-                            "props": {
-                                "type": "info",
-                                "variant": "tonal",
-                                "text": "下载文件夹路径 : 该路径为映射到迅雷Docker的路径, 请确保该路径存在, 最后需保留/ ,形如 /downloads/"
-                            },
-                        },{
-                        "component": "VAlert",
-                        "props": {
-                            "type": "info",
-                            "variant": "tonal",
-                            "text": "可使用 /xunlei 进行命令交互, 如 /xunlei 磁力链接"
-                        },
-                        }
-                    ]
-                }
+                            {
+                                "component": "VAlert",
+                                "props": {
+                                    "type": "info",
+                                    "variant": "tonal",
+                                    "text": "基于迅雷Docker项目 https://github.com/cnk3x/xunlei, 请先确认迅雷Docker是否正常运行, 登录后台F12抓取下列所需参数"
+                                },
+                            },{
+                                "component": "VAlert",
+                                "props": {
+                                    "type": "info",
+                                    "variant": "tonal",
+                                    "text": "迅雷Docker地址 : 格式为 http://192.168.1.200:4321 , 不要保留最后的/"
+                                },
+                            },{
+                                "component": "VAlert",
+                                "props": {
+                                    "type": "info",
+                                    "variant": "tonal",
+                                    "text": "可使用 /xunlei 进行命令交互, 如 /xunlei 磁力链接"
+                                },
+                            }
+                        ]
+                    }
                 ]
             },
         ]
@@ -250,8 +220,7 @@ class XunleiDownloader(_PluginBase):
             'PAN_AUTH': self._PAN_AUTH,
             'Authorization': self._Authorization,
             'COOKIE_STR': self._COOKIE_STR,
-            'magnet_url': self._magnet_url,
-            'downloads_path': self._downloads_path
+            'magnet_url': self._magnet_url
         }
         return form_content, form_data
 
@@ -384,7 +353,7 @@ class XunleiDownloader(_PluginBase):
         folders_data = folders_response.json()
         downloads_id = None
         for folder in folders_data.get('files', []):
-            if folder.get('params', {}).get('AliasPath') == self._downloads_path:
+            if folder.get('params', {}).get('category_name') == "默认下载目录":
                 downloads_id = folder.get('id')
                 break
         if not downloads_id:
