@@ -375,8 +375,8 @@ class XunleiDownloader(_PluginBase):
         # 4. 创建下载任务
         task_response = self.create_xunlei_task(target, magnet_url, downloads_id, file_name, file_size, total_file_count)
         if not task_response.ok:
-            return False, f"磁力链接添加下载失败: {task_response.text}"
-        return True, f"磁力链接添加下载成功"
+            return False, f"磁力链接添加下载失败: {task_response.text}。"
+        return True, f"磁力链接添加下载成功!"
 
     @eventmanager.register(EventType.PluginAction)
     def remote_sync_one(self, event: Event = None):
