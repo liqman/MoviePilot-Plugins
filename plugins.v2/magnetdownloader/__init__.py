@@ -254,7 +254,7 @@ class MagnetDownloader(_PluginBase):
                                 'props': {
                                     'model': 'downloader_url',
                                     'label': '下载器URL',
-                                    'placeholder': 'http://127.0.0.1:8080/ 或 http://127.0.0.1:9091/transmission/rpc'
+                                    'placeholder': 'http://127.0.0.1:8080/'
                                 }
                             }
                         ]
