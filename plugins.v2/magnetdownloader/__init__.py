@@ -419,7 +419,7 @@ class MagnetDownloader(_PluginBase):
                     "props": {
                         "type": "info",
                         "variant": "tonal",
-                        "text": "下载器URL : 格式为 http://127.0.0.1:8080/ , 保留最后的/"
+                        "text": "下载器URL : 格式为 http://127.0.0.1:8080"
                     },
                 },{
                     "component": "VAlert",
