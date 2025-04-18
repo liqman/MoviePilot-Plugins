@@ -192,7 +192,7 @@ class XunleiDownloader(_PluginBase):
                                 "props": {
                                     "type": "info",
                                     "variant": "tonal",
-                                    "text": "基于迅雷Docker项目 https://github.com/cnk3x/xunlei, 请先确认迅雷Docker是否正常运行, 登录后台F12抓取下列所需参数"
+                                    "text": "登录迅雷Docker后台F12抓取下列所需参数, 方法详见 https://github.com/liqman/MoviePilot-Plugins/blob/main/plugins.v2/xunleidownloader/README.md"
                                 },
                             },{
                                 "component": "VAlert",
