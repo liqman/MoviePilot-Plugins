@@ -255,9 +255,6 @@ class XunleiDownloader(_PluginBase):
         }
         return form_content, form_data
 
-    def get_page(self) -> List[dict]:
-        return []
-
     def stop_service(self):
         pass
 
