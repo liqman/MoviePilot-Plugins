@@ -6,6 +6,7 @@
 
 - 支持通过 Web 面板一键推送磁力链接到迅雷 Docker
 - 支持多条磁力链接批量推送
+- 支持通过命令下载磁力链接
 
 ---
 
@@ -14,7 +15,9 @@
 1. 部署并启动 [cnk3x/xunlei Docker 项目](https://github.com/cnk3x/xunlei)。
 2. 登录迅雷 Docker 后台，F12 抓包获取 pan-auth、Authorization、Cookie 等参数。
 3. 在 MoviePilot 插件面板中填写上述参数，保存。
-4. 在"磁力链接"输入框粘贴磁力链接，保存即可自动推送到迅雷默认下载目录下载。
+4. 通过以下方式下载磁力链接，保存到迅雷默认保存路径：
+   - 在插件配置页面输入磁力链接
+   - 使用`/xunlei`命令，如：`/xunlei magnet:?xt=urn:btih:xxxxx`
 
 ---
 
