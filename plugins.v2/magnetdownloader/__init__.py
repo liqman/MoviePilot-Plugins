@@ -465,10 +465,6 @@ class MagnetDownloader(_PluginBase):
             "tracker_list": ""
         }
 
-    def get_page(self) -> List[dict]:
-        # 可扩展详情页
-        return []
-
     def stop_service(self):
         # 可扩展停止逻辑
         pass 
