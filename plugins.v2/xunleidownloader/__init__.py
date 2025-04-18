@@ -210,28 +210,35 @@ class XunleiDownloader(_PluginBase):
                         'component': 'VCol',
                         'props': {'cols': 12},
                         'content': [
-                            {
-                    "component": "VAlert",
-                    "props": {
-                        "type": "info",
-                        "variant": "tonal",
-                        "text": "基于迅雷Docker项目 https://github.com/cnk3x/xunlei, 请先确认迅雷Docker是否正常运行, 登录后台F12抓取下列所需参数"
-                    },
-                    },{
+                                {
                         "component": "VAlert",
                         "props": {
                             "type": "info",
                             "variant": "tonal",
-                            "text": "迅雷Docker地址 : 格式为 http://192.168.1.200:4321 , 不要保留最后的/"
-                    },
-                    },{
+                            "text": "基于迅雷Docker项目 https://github.com/cnk3x/xunlei, 请先确认迅雷Docker是否正常运行, 登录后台F12抓取下列所需参数"
+                        },
+                        },{
+                            "component": "VAlert",
+                            "props": {
+                                "type": "info",
+                                "variant": "tonal",
+                                "text": "迅雷Docker地址 : 格式为 http://192.168.1.200:4321 , 不要保留最后的/"
+                        },
+                        },{
+                            "component": "VAlert",
+                            "props": {
+                                "type": "info",
+                                "variant": "tonal",
+                                "text": "下载文件夹路径 : 该路径为映射到迅雷Docker的路径, 请确保该路径存在, 最后需保留/ ,形如 /downloads/"
+                            },
+                        },{
                         "component": "VAlert",
                         "props": {
                             "type": "info",
                             "variant": "tonal",
-                            "text": "下载文件夹路径 : 该路径为映射到迅雷Docker的路径, 请确保该路径存在, 最后需保留/ ,形如 /downloads/"
-                    },
-                    }
+                            "text": "可使用 /xunlei 进行命令交互, 如 /xunlei 磁力链接"
+                        },
+                        }
                     ]
                 }
                 ]
