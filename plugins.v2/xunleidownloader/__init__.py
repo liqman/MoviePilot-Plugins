@@ -7,7 +7,7 @@ import json
 class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
     plugin_desc = "通过迅雷添加磁力任务。"
-    plugin_icon = "xunlei.png"
+    plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png"
     plugin_version = "1.0"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
