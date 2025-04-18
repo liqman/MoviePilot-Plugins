@@ -435,6 +435,13 @@ class MagnetDownloader(_PluginBase):
                         "variant": "tonal",
                         "text": "自定义Tracker可从 https://github.com/ngosang/trackerslist 获取"
                     },
+                },{
+                    "component": "VAlert",
+                    "props": {
+                        "type": "info",
+                        "variant": "tonal",
+                        "text": "可使用 /dm 进行命令交互, 如 /dm 磁力链接"
+                    },
                 }
             ],
         })
