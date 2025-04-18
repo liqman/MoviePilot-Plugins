@@ -8,7 +8,19 @@
         "author": "liqman",
         "level": 1,
         "history": {
-            "v1.0": "交互命令下载 /magnet 磁力link"
+            "v1.0": "交互命令下载 /dm 磁力link"
+        }
+    },
+    "XunleiDownloader": {
+        "name": "迅雷磁力下载",
+        "description": "通过迅雷添加磁力任务。",
+        "labels": "下载",
+        "version": "1.0",
+        "icon": "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/download.png",
+        "author": "liqman",
+        "level": 1,
+        "history": {
+            "v1.0": "交互命令下载 /xunlei 磁力link"
         }
     }
 }
