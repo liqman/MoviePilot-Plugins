@@ -13,7 +13,7 @@ import time
 class MagnetDownloader(_PluginBase):
     plugin_name = "磁力链接下载"
     plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
-    plugin_icon = "magnet.png"
+    plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/magnet.png"
     plugin_version = "1.0"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
