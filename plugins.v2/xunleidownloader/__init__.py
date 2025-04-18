@@ -10,7 +10,7 @@ class XunleiDownloader(_PluginBase):
     plugin_icon = "xunlei.png"
     plugin_version = "1.0"
     plugin_author = "liqman"
-    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
+    author_url = "https://github.com/liqman"
     plugin_config_prefix = "xunleidownloader_"
     plugin_order = 31
     auth_level = 1
