@@ -15,8 +15,8 @@ class MagnetDownloader(_PluginBase):
     plugin_desc = "通过磁力链接添加下载任务，支持qbittorrent和transmission。"
     plugin_icon = "magnet.png"
     plugin_version = "1.0"
-    plugin_author = "your_name"
-    author_url = "https://github.com/your_github"
+    plugin_author = "liqman"
+    author_url = "https://github.com/liqman/MoviePilot-Plugins/"
     plugin_config_prefix = "magnetdownloader_"
     plugin_order = 30
     auth_level = 1
