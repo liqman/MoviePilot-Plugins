@@ -1,31 +1,5 @@
-# 磁力链接下载插件
+MoviePilot三方插件市场：[https://github.com/thsrite/MoviePilot-Plugins/](https://github.com/liqman/MoviePilot-Plugins)
 
-这是MoviePilot的磁力链接下载插件，可以通过磁力链接下载文件。
-
-## 功能特点
-
-- 支持qBittorrent和Transmission下载器
-- 支持配置自定义保存路径
-- 支持通过命令下载磁力链接
-- 支持自定义Tracker
-
-## 使用方法
-
-1. 在插件管理页面启用此插件
-2. 配置下载器和保存路径
-3. 通过以下方式下载磁力链接：
-   - 在插件配置页面输入磁力链接
-   - 使用`/dm`命令，如：`/dm magnet:?xt=urn:btih:xxxxx`
-
-## 配置说明
-
-- **下载器**：选择使用的下载工具，支持qBittorrent和Transmission
-- **暂停下载**：是否在添加下载后暂停任务
-- **自定义保存路径**：手动指定下载保存路径（优先级高于MoviePilot保存路径）
-- **磁力链接**：要下载的磁力链接，一行一个，格式：`magnet:?xt=urn:btih:xxx`
-
-
-## 注意事项
-
-- 磁力链接必须以`magnet:?xt=urn:btih:`开头
-- 确保下载器已正确配置并可用
+插件列表
+磁力链接下载 v1.0 通过磁力链接添加下载任务，支持qbittorrent和transmission。
+迅雷磁力下载 v1.0 通过迅雷添加磁力任务。。
