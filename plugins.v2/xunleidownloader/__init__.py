@@ -101,7 +101,7 @@ class XunleiDownloader(_PluginBase):
                                 'props': {
                                     'model': 'BASE_URL',
                                     'label': '迅雷Docker地址',
-                                    'placeholder': '如：http://192.168.1.200:4321'
+                                    'placeholder': '如：http://192.168.1.200:4321, 最后不要加/'
                                 }
                             }
                         ]
