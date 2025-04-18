@@ -18,16 +18,16 @@
 
 ---
 
+## 常见问题
+
+1. **如何获取 pan-auth、Authorization、Cookie？**
+   - 登录迅雷 Docker 后台，按 F12 打开开发者工具，切换到 Network，找到任意请求，查看请求即可获取。
+
 ## 抓包说明
 1. 找到链接形如 http://ip:port/webman/3rdparty/pan-xunlei-com/index.cgi/device/info/watch?space=xxx
 ![GitHub图标](https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/images/F12_1.png)
 2. 复制图中的三个参数的值到插件面板
 ![GitHub图标](https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/images/F12_2.png)
-
-## 常见问题
-
-1. **如何获取 pan-auth、Authorization、Cookie？**
-   - 登录迅雷 Docker 后台，按 F12 打开开发者工具，切换到 Network，找到任意请求，查看请求头即可获取。
 
 ---
 
