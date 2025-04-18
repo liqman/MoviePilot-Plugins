@@ -3,6 +3,9 @@ from typing import Any, List, Dict, Tuple, Optional
 import requests
 import urllib.parse
 import json
+from app.schemas.types import EventType
+from app.core.event import eventmanager, Event
+from app.log import logger
 
 class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
@@ -51,8 +54,8 @@ class XunleiDownloader(_PluginBase):
     def get_command() -> List[Dict[str, Any]]:
         return [
             {
-                "cmd": "/xunlei",
-                "event": None,
+                "cmd": "/xl",
+                "event": EventType.PluginAction,
                 "desc": "迅雷磁力下载",
                 "category": "",
                 "data": {
@@ -206,7 +209,7 @@ class XunleiDownloader(_PluginBase):
                                 "props": {
                                     "type": "info",
                                     "variant": "tonal",
-                                    "text": "可使用 /xunlei 进行命令交互, 如 /xunlei 磁力链接"
+                                    "text": "可使用 /xl 进行命令交互, 如 /xl 磁力链接"
                                 },
                             }
                         ]
@@ -357,7 +360,7 @@ class XunleiDownloader(_PluginBase):
                 downloads_id = folder.get('id')
                 break
         if not downloads_id:
-            return False, "未找到downloads文件夹，无法创建下载任务"
+            return False, "未找到默认下载目录，无法创建下载任务"
         # 3. 获取资源列表
         resource_response = self.xunlei_request(magnet_url)
         if not resource_response.ok:
@@ -372,5 +375,28 @@ class XunleiDownloader(_PluginBase):
         # 4. 创建下载任务
         task_response = self.create_xunlei_task(target, magnet_url, downloads_id, file_name, file_size, total_file_count)
         if not task_response.ok:
-            return False, f"创建下载任务失败: {task_response.text}"
-        return True, f"下载任务创建成功: {file_name}"
+            return False, f"磁力链接添加下载失败: {task_response.text}"
+        return True, f"磁力链接添加下载成功"
+
+    @eventmanager.register(EventType.PluginAction)
+    def remote_sync_one(self, event: Event = None):
+        if event:
+            event_data = event.event_data
+            if not event_data or event_data.get("action") != "xunlei_download":
+                return
+            args = event_data.get("args")
+            if not args:
+                # 兼容命令行 arg_str
+                args = event_data.get("arg_str")
+            if not args:
+                logger.error(f"缺少参数：{event_data}")
+                return
+            success, result = self.download_magnet(args)
+            if not success:
+                self.post_message(channel=event.event_data.get("channel"),
+                                  title="迅雷磁力下载失败, 请确认磁力链接有效性！",
+                                  userid=event.event_data.get("user"))
+            else:
+                self.post_message(channel=event.event_data.get("channel"),
+                                  title=f"{result}",
+                                  userid=event.event_data.get("user"))
