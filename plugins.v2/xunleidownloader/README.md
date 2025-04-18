@@ -17,7 +17,7 @@
 3. 在 MoviePilot 插件面板中填写上述参数，保存。
 4. 通过以下方式下载磁力链接，保存到迅雷默认保存路径：
    - 在插件配置页面输入磁力链接
-   - 使用`/xunlei`命令，如：`/xunlei magnet:?xt=urn:btih:xxxxx`
+   - 使用`/xl`命令，如：`/xl magnet:?xt=urn:btih:xxxxx`
 
 ---
 
