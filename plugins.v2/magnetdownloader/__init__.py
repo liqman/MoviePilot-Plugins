@@ -151,11 +151,11 @@ class MagnetDownloader(_PluginBase):
             logger.error(f'add_torrent exception: {e}')
             return False, f'添加下载异常: {e}'
         if result:
-            logger.info(f"磁力链接添加下载成功, 保存位置 {self._save_path}")
-            return True, f"磁力链接添加下载成功, 保存位置 {self._save_path}"
+            logger.info(f"磁力链接添加下载成功, 保存位置 {self._save_path}。")
+            return True, f"磁力链接添加下载成功, 保存位置 {self._save_path}。"
         else:
-            logger.error(f"磁力链接添加下载失败, 保存位置 {self._save_path}")
-            return False, f"磁力链接添加下载失败, 保存位置 {self._save_path}"
+            logger.error(f"磁力链接添加下载失败, 保存位置 {self._save_path}。")
+            return False, f"磁力链接添加下载失败, 保存位置 {self._save_path}。"
 
     @eventmanager.register(EventType.PluginAction)
     def remote_sync_one(self, event: Event = None):
