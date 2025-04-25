@@ -29,9 +29,8 @@
 ## 抓包说明
 1. 找到链接形如 http://ip:port/webman/3rdparty/pan-xunlei-com/index.cgi/device/info/watch?space=xxx
 ![GitHub图标](https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/images/F12_1.png)
-2. 复制图中的三个参数的值到插件面板
+2. 复制图中的参数的值到插件面板
 ![GitHub图标](https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/images/F12_2.png)
-
 ---
 
 ## 致谢
