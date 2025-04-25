@@ -171,8 +171,8 @@ class XunleiDownloader(_PluginBase):
                                 'props': {
                                     'model': 'password',
                                     'label': '迅雷Docker认证密码',
-                                    'placeholder': 'password',
-                                    'type': 'password'
+                                    'type': 'password',
+                                    'placeholder': 'password'
                                 }
                             }
                         ]
