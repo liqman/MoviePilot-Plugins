@@ -11,7 +11,7 @@ class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
     plugin_desc = "通过迅雷添加磁力任务。"
     plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png"
-    plugin_version = "1.0"
+    plugin_version = "1.1"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
     plugin_config_prefix = "xunleidownloader_"
@@ -22,17 +22,39 @@ class XunleiDownloader(_PluginBase):
     _BASE_URL = ''
     _PAN_AUTH = ''
     _Authorization = ''
-    _COOKIE_STR = ''
+    _username = ''
+    _password = ''
     _magnet_url = ''
 
     def init_plugin(self, config: dict = None):
         if config:
             self._enabled = config.get("enabled", False)
             self._BASE_URL = config.get("BASE_URL", "")
-            self._PAN_AUTH = config.get("PAN_AUTH", "")
             self._Authorization = config.get("Authorization", "")
-            self._COOKIE_STR = config.get("COOKIE_STR", "")
+            self._username = config.get("username", "")
+            self._password = config.get("password", "")
             self._magnet_url = config.get("magnet_url", "")
+            # 自动获取 pan_auth
+            self._PAN_AUTH = ''
+            if self._username and self._password and self._BASE_URL:
+                try:
+                    import urllib3
+                    import re
+                    from requests.auth import HTTPBasicAuth
+                    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                    session = requests.Session()
+                    url = self._BASE_URL.rstrip('/') + '/webman/3rdparty/pan-xunlei-com/index.cgi/#/'
+                    response = session.get(url, auth=HTTPBasicAuth(self._username, self._password), verify=False)
+                    pattern = r'return\s*["\\\']([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)["\\\']'
+                    # logger.info(response.text)
+                    result = re.search(pattern, response.text)
+                    if result:
+                        self._PAN_AUTH = result.group(1)
+                        logger.info(f"自动获取 pan_auth 成功: {self._PAN_AUTH}")
+                    else:
+                        logger.error("未能自动获取 pan_auth，请检查用户名密码和迅雷服务端页面。")
+                except Exception as e:
+                    logger.error(f"自动获取 pan_auth 失败: {e}")
             # 自动下载
             if self._magnet_url:
                 for magnet_url in str(self._magnet_url).split("\n"):
@@ -41,9 +63,9 @@ class XunleiDownloader(_PluginBase):
             self.update_config({
                 "enabled": self._enabled,
                 "BASE_URL": self._BASE_URL,
-                "PAN_AUTH": self._PAN_AUTH,
                 "Authorization": self._Authorization,
-                "COOKIE_STR": self._COOKIE_STR,
+                "username": self._username,
+                "password": self._password,
                 "magnet_url": self._magnet_url
             })
 
@@ -122,44 +144,39 @@ class XunleiDownloader(_PluginBase):
                     },
                 ]
             },
-            # pan-auth单独一行
+            # 用户名和密码同一行
             {
                 'component': 'VRow',
                 'content': [
                     {
                         'component': 'VCol',
-                        'props': {'cols': 12},
+                        'props': {'cols': 12, 'md': 6},
                         'content': [
                             {
                                 'component': 'VTextField',
                                 'props': {
-                                    'model': 'PAN_AUTH',
-                                    'label': 'pan-auth值',
-                                    'placeholder': 'pan-auth令牌'
+                                    'model': 'username',
+                                    'label': '迅雷用户名',
+                                    'placeholder': '如：liqman'
                                 }
                             }
                         ]
-                    }
-                ]
-            },
-            # Cookie字符串单独一行
-            {
-                'component': 'VRow',
-                'content': [
+                    },
                     {
                         'component': 'VCol',
-                        'props': {'cols': 12},
+                        'props': {'cols': 12, 'md': 6},
                         'content': [
                             {
-                                'component': 'VTextarea',
+                                'component': 'VTextField',
                                 'props': {
-                                    'model': 'COOKIE_STR',
-                                    'label': 'Cookie字符串',
-                                    'placeholder': 'my_vms=...; PHPSID=...; ...'
+                                    'model': 'password',
+                                    'label': '迅雷密码',
+                                    'placeholder': '如：yourpassword',
+                                    'type': 'password'
                                 }
                             }
                         ]
-                    }
+                    },
                 ]
             },
             # 磁力链接单独一行
@@ -220,9 +237,9 @@ class XunleiDownloader(_PluginBase):
         form_data = {
             'enabled': self._enabled,
             'BASE_URL': self._BASE_URL,
-            'PAN_AUTH': self._PAN_AUTH,
             'Authorization': self._Authorization,
-            'COOKIE_STR': self._COOKIE_STR,
+            'username': self._username,
+            'password': self._password,
             'magnet_url': self._magnet_url
         }
         return form_content, form_data
@@ -247,9 +264,6 @@ class XunleiDownloader(_PluginBase):
             'pan-auth': self._PAN_AUTH,
         }
 
-    def _get_cookies(self):
-        return dict(item.split('=') for item in self._COOKIE_STR.split('; ') if '=' in item)
-
     def get_device_info(self):
         base_url = f'{self._BASE_URL}/webman/3rdparty/pan-xunlei-com/index.cgi/device/info/watch'
         params = {
@@ -261,7 +275,6 @@ class XunleiDownloader(_PluginBase):
         response = requests.post(
             url,
             headers=self._get_headers(),
-            cookies=self._get_cookies(),
             json={},
             verify=False
         )
@@ -283,7 +296,6 @@ class XunleiDownloader(_PluginBase):
         response = requests.get(
             url,
             headers=self._get_headers(),
-            cookies=self._get_cookies(),
             verify=False
         )
         return response
@@ -302,7 +314,6 @@ class XunleiDownloader(_PluginBase):
             url,
             params=params,
             headers=self._get_headers(),
-            cookies=self._get_cookies(),
             json=data,
             verify=False
         )
@@ -334,16 +345,40 @@ class XunleiDownloader(_PluginBase):
             url,
             params=params,
             headers=self._get_headers(),
-            cookies=self._get_cookies(),
             json=data,
             verify=False
         )
         return response
 
-    def download_magnet(self, magnet_url: str):
+    def _refresh_pan_auth(self):
+        """自动获取 pan_auth"""
+        if self._username and self._password and self._BASE_URL:
+            try:
+                import urllib3
+                import re
+                from requests.auth import HTTPBasicAuth
+                urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+                session = requests.Session()
+                url = self._BASE_URL.rstrip('/') + '/webman/3rdparty/pan-xunlei-com/index.cgi/#/'
+                response = session.get(url, auth=HTTPBasicAuth(self._username, self._password), verify=False)
+                pattern = r'return\s*["\\\']([a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)["\\\']'
+                result = re.search(pattern, response.text)
+                if result:
+                    self._PAN_AUTH = result.group(1)
+                    logger.info(f"自动获取 pan_auth 成功: {self._PAN_AUTH}")
+                else:
+                    logger.error("未能自动获取 pan_auth，请检查用户名密码和迅雷服务端页面。")
+            except Exception as e:
+                logger.error(f"自动获取 pan_auth 失败: {e}")
+
+    def download_magnet(self, magnet_url: str, retry: bool = True):
         # 1. 获取设备信息
         device_info_response = self.get_device_info()
         if not device_info_response.ok:
+            # 检查是否 pan_auth 失效
+            if retry and ("pan_auth" in device_info_response.text or "401" in device_info_response.text or "unauthorized" in device_info_response.text.lower()):
+                self._refresh_pan_auth()
+                return self.download_magnet(magnet_url, retry=False)
             return False, f"获取设备信息失败: {device_info_response.text}"
         device_info = device_info_response.json()
         target = device_info.get('target', '')
@@ -352,6 +387,9 @@ class XunleiDownloader(_PluginBase):
         # 2. 获取文件夹列表
         folders_response = self.get_folders(space=target)
         if not folders_response.ok:
+            if retry and ("pan_auth" in folders_response.text or "401" in folders_response.text or "unauthorized" in folders_response.text.lower()):
+                self._refresh_pan_auth()
+                return self.download_magnet(magnet_url, retry=False)
             return False, f"获取文件夹失败: {folders_response.text}"
         folders_data = folders_response.json()
         downloads_id = None
@@ -364,6 +402,9 @@ class XunleiDownloader(_PluginBase):
         # 3. 获取资源列表
         resource_response = self.xunlei_request(magnet_url)
         if not resource_response.ok:
+            if retry and ("pan_auth" in resource_response.text or "401" in resource_response.text or "unauthorized" in resource_response.text.lower()):
+                self._refresh_pan_auth()
+                return self.download_magnet(magnet_url, retry=False)
             return False, f"获取资源失败: {resource_response.text}"
         resource_data = resource_response.json()
         if not resource_data.get('list', {}).get('resources'):
@@ -375,6 +416,9 @@ class XunleiDownloader(_PluginBase):
         # 4. 创建下载任务
         task_response = self.create_xunlei_task(target, magnet_url, downloads_id, file_name, file_size, total_file_count)
         if not task_response.ok:
+            if retry and ("pan_auth" in task_response.text or "401" in task_response.text or "unauthorized" in task_response.text.lower()):
+                self._refresh_pan_auth()
+                return self.download_magnet(magnet_url, retry=False)
             return False, f"磁力链接添加下载失败: {task_response.text}。"
         return True, f"磁力链接添加下载成功!"
 
