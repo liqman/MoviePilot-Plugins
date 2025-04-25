@@ -15,7 +15,7 @@
         "name": "迅雷磁力下载",
         "description": "通过迅雷添加磁力任务。",
         "labels": "下载",
-        "version": "1.0",
+        "version": "1.1",
         "icon": "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png",
         "author": "liqman",
         "level": 1,
