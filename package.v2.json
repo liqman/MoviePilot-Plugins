@@ -20,6 +20,7 @@
         "author": "liqman",
         "level": 1,
         "history": {
+            "v1.1": "修复掉登陆Bug",
             "v1.0": "交互命令下载 /xunlei 磁力link"
         }
     }
