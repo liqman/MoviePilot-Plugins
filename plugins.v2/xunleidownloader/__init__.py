@@ -156,8 +156,8 @@ class XunleiDownloader(_PluginBase):
                                 'component': 'VTextField',
                                 'props': {
                                     'model': 'username',
-                                    'label': '迅雷用户名',
-                                    'placeholder': '如：liqman'
+                                    'label': '迅雷Docker认证用户名',
+                                    'placeholder': 'Username'
                                 }
                             }
                         ]
@@ -170,8 +170,8 @@ class XunleiDownloader(_PluginBase):
                                 'component': 'VTextField',
                                 'props': {
                                     'model': 'password',
-                                    'label': '迅雷密码',
-                                    'placeholder': '如：yourpassword',
+                                    'label': '迅雷Docker认证密码',
+                                    'placeholder': 'Password',
                                     'type': 'password'
                                 }
                             }
