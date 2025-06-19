@@ -67,15 +67,15 @@ class AutoSubv2(_PluginBase):
     # 主题色
     plugin_color = "#2C4F7E"
     # 插件版本
-    plugin_version = "2.3"
+    plugin_version = "2.4"
     # 插件作者
-    plugin_author = "TimoYoung"
+    plugin_author = "liqman"
     # 作者主页
-    author_url = "https://github.com/TimoYoung"
+    author_url = "https://github.com/liqman"
     # 插件配置项ID前缀
     plugin_config_prefix = "autosubv2"
     # 加载顺序
-    plugin_order = 14
+    plugin_order = 24
     # 可使用的用户级别
     auth_level = 2
 
