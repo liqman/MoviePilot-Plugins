@@ -141,7 +141,7 @@ class AutoSubv2(_PluginBase):
                 compatible = chatgpt and chatgpt.get("compatible")
                 if not openai_key_str:
                     logger.error(f"请先在ChatGPT插件中维护openai_key")
-                    return
+                    # return
                 openai_key = [key.strip() for key in openai_key_str.split(',') if key.strip()][0]
             else:
                 openai_key = config.get('openai_key')
