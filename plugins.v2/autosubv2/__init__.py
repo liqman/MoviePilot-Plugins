@@ -1616,7 +1616,7 @@ class AutoSubv2(_PluginBase):
                                             {
                                                 'component': 'a',
                                                 'props': {
-                                                    'href': 'https://github.com/jxxghp/MoviePilot-Plugins/blob/main/plugins/autosubv2/README.md',
+                                                    'href': 'https://github.com/liqman/MoviePilot-Plugins/blob/main/plugins.v2/autosubv2/README.md',
                                                     'target': '_blank'
                                                 },
                                                 'content': [
