@@ -68,9 +68,9 @@ class AutoSubv2(_PluginBase):
     # 插件版本
     plugin_version = "2.3"
     # 插件作者
-    plugin_author = "TimoYoung"
+    plugin_author = "liqman"
     # 作者主页
-    author_url = "https://github.com/TimoYoung"
+    author_url = "https://github.com/liqman"
     # 插件配置项ID前缀
     plugin_config_prefix = "autosubv2"
     # 加载顺序
