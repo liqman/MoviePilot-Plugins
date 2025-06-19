@@ -1332,8 +1332,8 @@ class AutoSubv2(_PluginBase):
                                                                 'component': 'VSwitch',
                                                                 'props': {
                                                                     'model': 'use_ollama',
-                                                                    'label': '使用Ollama本地接口',
-                                                                    'hint': '需本地部署Ollama服务',
+                                                                    'label': '使用Ollama服务',
+                                                                    'hint': '需部署Ollama服务',
                                                                     'v-model': 'use_ollama'
                                                                 }
                                                             }
