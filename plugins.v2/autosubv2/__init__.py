@@ -26,6 +26,7 @@ from app.plugins import _PluginBase
 from app.utils.system import SystemUtils
 from plugins.autosubv2.ffmpeg import Ffmpeg
 from plugins.autosubv2.translate.openai_translate import OpenAi
+from plugins.autosubv2.translate.ollama_translate import Ollama
 
 
 class UserInterruptException(Exception):
@@ -68,9 +69,9 @@ class AutoSubv2(_PluginBase):
     # 插件版本
     plugin_version = "2.3"
     # 插件作者
-    plugin_author = "liqman"
+    plugin_author = "TimoYoung"
     # 作者主页
-    author_url = "https://github.com/liqman"
+    author_url = "https://github.com/TimoYoung"
     # 插件配置项ID前缀
     plugin_config_prefix = "autosubv2"
     # 加载顺序
@@ -95,6 +96,8 @@ class AutoSubv2(_PluginBase):
     _file_size = None
     _translate_zh = None
     _openai = None
+    _ollama = None # 新增 Ollama 实例
+    _use_ollama = None # 新增 Ollama 使用标志
     _enable_batch = None
     _batch_size = None
     _context_window = None
@@ -128,33 +131,55 @@ class AutoSubv2(_PluginBase):
             self._huggingface_proxy = config.get('proxy', True)
         self._translate_zh = config.get('translate_zh', False)
         if self._translate_zh:
+            self._use_ollama = config.get('use_ollama', False) # 获取 Ollama 使用标志
+            
+            # 无论选择哪种翻译器，都尝试初始化 OpenAI
             use_chatgpt = config.get('use_chatgpt', True)
             if use_chatgpt:
                 chatgpt = self.get_config("ChatGPT")
                 if not chatgpt:
                     logger.error(f"翻译依赖于ChatGPT，请先维护ChatGPT插件")
-                    return
-                openai_key_str = chatgpt and chatgpt.get("openai_key")
-                openai_url = chatgpt and chatgpt.get("openai_url")
-                openai_proxy = chatgpt and chatgpt.get("proxy")
-                openai_model = chatgpt and chatgpt.get("model")
-                compatible = chatgpt and chatgpt.get("compatible")
-                if not openai_key_str:
-                    logger.error(f"请先在ChatGPT插件中维护openai_key")
-                    # return
-                openai_key = [key.strip() for key in openai_key_str.split(',') if key.strip()][0]
+                    # 如果翻译依赖 ChatGPT 且 ChatGPT 配置缺失，则直接返回
+                    # return # 根据你的原始代码，这里可能需要根据实际情况决定是否 return
+                else:
+                    openai_key_str = chatgpt.get("openai_key")
+                    openai_url = chatgpt.get("openai_url")
+                    openai_proxy = chatgpt.get("proxy")
+                    openai_model = chatgpt.get("model")
+                    compatible = chatgpt.get("compatible")
+                    if not openai_key_str:
+                        logger.error(f"请先在ChatGPT插件中维护openai_key")
+                        # return # 同上，根据实际情况决定是否 return
+                    else:
+                        openai_key = [key.strip() for key in openai_key_str.split(',') if key.strip()][0]
+                        self._openai = OpenAi(api_key=openai_key, api_url=openai_url,
+                                              proxy=settings.PROXY if openai_proxy else None,
+                                              model=openai_model, compatible=bool(compatible))
             else:
                 openai_key = config.get('openai_key')
-                if not openai_key:
-                    logger.error(f"翻译依赖于OpenAI，请先维护openai_key")
-                    return
                 openai_url = config.get('openai_url', "https://api.openai.com")
                 openai_proxy = config.get('openai_proxy', False)
                 openai_model = config.get('openai_model', "gpt-3.5-turbo")
                 compatible = config.get('compatible', False)
-            self._openai = OpenAi(api_key=openai_key, api_url=openai_url,
-                                  proxy=settings.PROXY if openai_proxy else None,
-                                  model=openai_model, compatible=bool(compatible))
+                if not openai_key:
+                    logger.warn(f"未配置openai_key，OpenAI翻译器将无法使用。")
+                self._openai = OpenAi(api_key=openai_key, api_url=openai_url,
+                                      proxy=settings.PROXY if openai_proxy else None,
+                                      model=openai_model, compatible=bool(compatible))
+
+            # 初始化 Ollama
+            ollama_url = config.get('ollama_url', "http://localhost:11434")
+            ollama_model = config.get('ollama_model', "llama3")
+            self._ollama = Ollama(api_url=ollama_url, model=ollama_model)
+            
+            # 根据用户选择确定实际使用的翻译器
+            if self._use_ollama:
+                logger.info(f"翻译器设置为 Ollama")
+            elif self._openai: # 只有当 OpenAI 成功初始化后才显示
+                logger.info(f"翻译器设置为 OpenAI")
+            else:
+                logger.warn(f"未选择翻译器或翻译器初始化失败，字幕翻译功能将不可用。")
+
             self._enable_batch = config.get('enable_batch', True)
             self._batch_size = int(config.get('batch_size')) if config.get('batch_size') else 10
             self._context_window = int(config.get('context_window')) if config.get('context_window') else 5
@@ -295,7 +320,7 @@ class AutoSubv2(_PluginBase):
         item_media: MediaInfo = item.get("mediainfo")
         logger.info(f"监听到媒体入库事件：{item_media.title}")
         origin_lang = item_media.original_language
-        prefer_langs = ['zh', 'chi', 'zh-CN', 'chs', 'zhs', 'zh-Hans', 'zhong', 'simp', 'cn']
+        prefer_langs = ['zh', 'chi', 'zh-CN', 'chs', 'zh-Hans', 'zhong', 'simp', 'cn']
         if origin_lang in prefer_langs:
             logger.info(f"媒体原始语言为中文，跳过处理")
             return
@@ -394,60 +419,105 @@ class AutoSubv2(_PluginBase):
         :return:
         """
         lang = audio_lang
+        model = None # 初始化为 None
         try:
             from faster_whisper import WhisperModel, download_model
+
             # 设置缓存目录, 防止缓存同目录出现 cross-device 错误
             cache_dir = os.path.join(self._faster_whisper_model_path, "cache")
             if not os.path.exists(cache_dir):
-                os.mkdir(cache_dir)
+                logger.info(f"创建faster-whisper模型缓存目录：{cache_dir}")
+                os.makedirs(cache_dir, exist_ok=True) # 使用 os.makedirs 确保创建所有缺失的父目录
             os.environ["HF_HUB_CACHE"] = cache_dir
+
             if self._huggingface_proxy:
-                os.environ["HTTP_PROXY"] = settings.PROXY['http']
-                os.environ["HTTPS_PROXY"] = settings.PROXY['https']
+                # 检查 settings.PROXY 是否存在且包含 'http' / 'https' 键
+                if settings.PROXY and isinstance(settings.PROXY, dict):
+                    if 'http' in settings.PROXY and settings.PROXY['http']:
+                        os.environ["HTTP_PROXY"] = settings.PROXY['http']
+                        logger.info(f"设置 HTTP_PROXY: {settings.PROXY['http']}")
+                    if 'https' in settings.PROXY and settings.PROXY['https']:
+                        os.environ["HTTPS_PROXY"] = settings.PROXY['https']
+                        logger.info(f"设置 HTTPS_PROXY: {settings.PROXY['https']}")
+                else:
+                    logger.warn("配置中启用HuggingFace代理，但settings.PROXY未配置或格式不正确。将跳过设置代理环境变量。")
+                    # 如果没有有效的代理配置，可以考虑禁用 _huggingface_proxy 或者给出更明确的提示
+                    # self._huggingface_proxy = False # 或者这样，避免后续尝试使用不存在的代理
+
+            logger.info(f"正在下载或加载 faster-whisper 模型 '{self._faster_whisper_model}' 到 '{cache_dir}' ...")
+            # 尝试下载模型
+            model_path = download_model(self._faster_whisper_model, local_files_only=False, cache_dir=cache_dir)
+            if not model_path:
+                logger.error(f"无法下载或找到 faster-whisper 模型 '{self._faster_whisper_model}'。请检查网络或模型名称。")
+                return False, None
+
+            logger.info(f"faster-whisper 模型已准备就绪: {model_path}")
+            # 初始化 WhisperModel
             model = WhisperModel(
-                download_model(self._faster_whisper_model, local_files_only=False, cache_dir=cache_dir),
-                device="cpu", compute_type="int8", cpu_threads=psutil.cpu_count(logical=False))
+                model_path, # 确保这里是有效的模型路径
+                device="cpu", # 尝试使用 "cuda" 如果有GPU，否则保持 "cpu"
+                compute_type="int8", # 尝试 "int8_float16" 或 "float16" 如果 int8 有问题
+                cpu_threads=psutil.cpu_count(logical=False)
+            )
+            logger.info(f"faster-whisper 模型初始化完成。")
+
+            logger.info(f"开始转录音频文件 '{audio_file}'，语言设置为 '{lang}' ...")
             segments, info = model.transcribe(audio_file,
                                               language=lang if lang != 'auto' else None,
                                               word_timestamps=True,
                                               vad_filter=True,
                                               temperature=0,
                                               beam_size=5)
+
+            if info is None: # 检查 info 是否为 None
+                logger.error(f"faster-whisper 转录失败，未能获取到语言信息。")
+                return False, None
+
             logger.info("Detected language '%s' with probability %f" % (info.language, info.language_probability))
 
             if lang == 'auto':
                 lang = info.language
 
             subs = []
-            if lang in ['en', 'eng']:
-                # 英文先生成单词级别字幕，再合并
-                idx = 0
-                for segment in segments:
-                    if self._event.is_set():
-                        logger.info(f"whisper音轨转录服务停止")
-                        raise UserInterruptException(f"用户中断当前任务")
-                    for word in segment.words:
-                        idx += 1
-                        subs.append(srt.Subtitle(index=idx,
-                                                 start=timedelta(seconds=word.start),
-                                                 end=timedelta(seconds=word.end),
-                                                 content=word.word))
-                subs = self.__merge_srt(subs)
-            else:
-                for i, segment in enumerate(segments):
-                    if self._event.is_set():
-                        logger.info(f"whisper音轨转录服务停止")
-                        raise UserInterruptException(f"用户中断当前任务")
-                    subs.append(srt.Subtitle(index=i,
-                                             start=timedelta(seconds=segment.start),
-                                             end=timedelta(seconds=segment.end),
-                                             content=segment.text))
+            # 注意：segments 可能是一个生成器，如果它在被遍历前就因为某种原因失败，也可能导致问题
+            # 最好在尝试遍历前检查其是否可用，或者依赖 try-except 捕获生成器内部的错误
+            try:
+                if lang in ['en', 'eng']:
+                    # 英文先生成单词级别字幕，再合并
+                    idx = 0
+                    for segment in segments: # 遍历生成器
+                        if self._event.is_set():
+                            logger.info(f"whisper音轨转录服务停止")
+                            raise UserInterruptException(f"用户中断当前任务")
+                        for word in segment.words:
+                            idx += 1
+                            subs.append(srt.Subtitle(index=idx,
+                                                     start=timedelta(seconds=word.start),
+                                                     end=timedelta(seconds=word.end),
+                                                     content=word.word))
+                    subs = self.__merge_srt(subs)
+                else:
+                    for i, segment in enumerate(segments): # 遍历生成器
+                        if self._event.is_set():
+                            logger.info(f"whisper音轨转录服务停止")
+                            raise UserInterruptException(f"用户中断当前任务")
+                        subs.append(srt.Subtitle(index=i,
+                                                 start=timedelta(seconds=segment.start),
+                                                 end=timedelta(seconds=segment.end),
+                                                 content=segment.text))
+            except Exception as segments_error:
+                logger.error(f"处理faster-whisper转录结果时发生错误: {segments_error}")
+                traceback.print_exc()
+                return False, None
+
             self.__save_srt(f"{audio_file}.srt", subs)
             logger.info(f"音轨转字幕完成")
             return True, lang
         except ImportError:
-            logger.warn(f"faster-whisper 未安装，不进行处理")
+            logger.warn(f"faster-whisper 未安装，不进行处理。请运行 'pip install faster-whisper'。")
             return False, None
+        except UserInterruptException:
+            raise # 重新抛出用户中断异常
         except Exception as e:
             traceback.print_exc()
             logger.error(f"faster-whisper 处理异常：{e}")
@@ -808,10 +878,20 @@ class AutoSubv2(_PluginBase):
             return self.__process_batch(all_subs, items)
         return [self.__process_single(all_subs, item) for item in items]
 
-    def __translate_to_zh(self, text: str, context: str = None) -> str:
+    def __translate_to_zh(self, text: str, context: str = None) -> (bool, str):
         if self._event.is_set():
             raise UserInterruptException(f"用户中断当前任务")
-        return self._openai.translate_to_zh(text, context)
+        
+        if self._use_ollama: # 根据 _use_ollama 标志选择翻译器
+            if not self._ollama:
+                logger.error("Ollama翻译器未初始化，无法进行翻译。")
+                return False, "Ollama翻译器未初始化。"
+            return self._ollama.translate_to_zh(text, context)
+        else:
+            if not self._openai:
+                logger.error("OpenAI翻译器未初始化，无法进行翻译。")
+                return False, "OpenAI翻译器未初始化。"
+            return self._openai.translate_to_zh(text, context)
 
     def __process_batch(self, all_subs: list, batch: list) -> list:
         """批量处理逻辑"""
@@ -977,7 +1057,7 @@ class AutoSubv2(_PluginBase):
         :return:
         """
         if self._translate_zh:
-            prefer_langs = ['zh', 'chi', 'zh-CN', 'chs', 'zhs', 'zh-Hans', 'zhong', 'simp', 'cn']
+            prefer_langs = ['zh', 'chi', 'zh-CN', 'chs', 'zh-Hans', 'zhong', 'simp', 'cn']
             strict = True
         else:
             if self._translate_preference == "english_first":
@@ -1245,12 +1325,36 @@ class AutoSubv2(_PluginBase):
                                                         ]
                                                     },
                                                     {
+                                                        'component': 'VCol', # 新增 Ollama 选择
+                                                        'props': {'cols': 12, 'md': 4},
+                                                        'content': [
+                                                            {
+                                                                'component': 'VSwitch',
+                                                                'props': {
+                                                                    'model': 'use_ollama',
+                                                                    'label': '使用Ollama本地接口',
+                                                                    'hint': '需本地部署Ollama服务',
+                                                                    'v-model': 'use_ollama'
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
                                                         'component': 'VTextField',
                                                         'props': {
                                                             'model': 'use_chatgpt_trigger',
                                                             'class': 'd-none',
                                                             'text': 'trigger',
                                                             'change': 'use_chatgpt_trigger = use_chatgpt ? 1 : 0'
+                                                        }
+                                                    },
+                                                    {
+                                                        'component': 'VTextField', # 新增 Ollama trigger
+                                                        'props': {
+                                                            'model': 'use_ollama_trigger',
+                                                            'class': 'd-none',
+                                                            'text': 'trigger',
+                                                            'change': 'use_ollama_trigger = use_ollama ? 1 : 0'
                                                         }
                                                     },
                                                     {
@@ -1265,8 +1369,8 @@ class AutoSubv2(_PluginBase):
                                                                 'props': {
                                                                     'model': 'openai_proxy',
                                                                     'label': '使用代理服务器',
-                                                                    'v-show': '!use_chatgpt',
-                                                                    'v-if': '!use_chatgpt'
+                                                                    'v-show': '!use_chatgpt && !use_ollama', # 修改 v-show
+                                                                    'v-if': '!use_chatgpt && !use_ollama' # 修改 v-if
                                                                 }
                                                             }
                                                         ]
@@ -1283,7 +1387,7 @@ class AutoSubv2(_PluginBase):
                                                                 'props': {
                                                                     'model': 'compatible',
                                                                     'label': '兼容模式',
-                                                                    'v-show': '!use_chatgpt'
+                                                                    'v-show': '!use_chatgpt && !use_ollama' # 修改 v-show
                                                                 }
                                                             }
                                                         ]
@@ -1306,7 +1410,7 @@ class AutoSubv2(_PluginBase):
                                                                     'model': 'openai_url',
                                                                     'label': 'OpenAI API Url',
                                                                     'placeholder': 'https://api.openai.com',
-                                                                    'v-show': '!use_chatgpt'
+                                                                    'v-show': '!use_chatgpt && !use_ollama' # 修改 v-show
                                                                 }
                                                             }
                                                         ]
@@ -1324,7 +1428,7 @@ class AutoSubv2(_PluginBase):
                                                                     'model': 'openai_key',
                                                                     'label': 'API密钥',
                                                                     'placeholder': 'sk-xxx',
-                                                                    'v-show': '!use_chatgpt'
+                                                                    'v-show': '!use_chatgpt && !use_ollama' # 修改 v-show
                                                                 }
                                                             }
                                                         ]
@@ -1342,7 +1446,50 @@ class AutoSubv2(_PluginBase):
                                                                     'model': 'openai_model',
                                                                     'label': '自定义模型',
                                                                     'placeholder': 'gpt-3.5-turbo',
-                                                                    'v-show': '!use_chatgpt'
+                                                                    'v-show': '!use_chatgpt && !use_ollama' # 修改 v-show
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            { # 新增 Ollama 配置部分
+                                                'component': 'VRow',
+                                                'content': [
+                                                    {
+                                                        'component': 'VCol',
+                                                        'props': {
+                                                            'cols': 12,
+                                                            'md': 4
+                                                        },
+                                                        'content': [
+                                                            {
+                                                                'component': 'VTextField',
+                                                                'props': {
+                                                                    'model': 'ollama_url',
+                                                                    'label': 'Ollama API Url',
+                                                                    'placeholder': 'http://localhost:11434',
+                                                                    'v-show': 'use_ollama',
+                                                                    'v-if': 'use_ollama'
+                                                                }
+                                                            }
+                                                        ]
+                                                    },
+                                                    {
+                                                        'component': 'VCol',
+                                                        'props': {
+                                                            'cols': 12,
+                                                            'md': 4
+                                                        },
+                                                        'content': [
+                                                            {
+                                                                'component': 'VTextField',
+                                                                'props': {
+                                                                    'model': 'ollama_model',
+                                                                    'label': 'Ollama 模型',
+                                                                    'placeholder': 'llama3',
+                                                                    'v-show': 'use_ollama',
+                                                                    'v-if': 'use_ollama'
                                                                 }
                                                             }
                                                         ]
@@ -1502,11 +1649,15 @@ class AutoSubv2(_PluginBase):
             "proxy": True,
             "use_chatgpt": True,
             "use_chatgpt_trigger": 0,
+            "use_ollama": False,  # 新增默认值
+            "use_ollama_trigger": 0, # 新增默认值
             "openai_proxy": False,
             "compatible": False,
             "openai_url": "https://api.openai.com",
             "openai_key": None,
             "openai_model": "gpt-3.5-turbo",
+            "ollama_url": "http://localhost:11434", # 新增默认值
+            "ollama_model": "llama3", # 新增默认值
             "context_window": 5,
             "max_retries": 3,
             "enable_merge": False,
