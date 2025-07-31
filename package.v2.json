@@ -15,11 +15,12 @@
         "name": "迅雷磁力下载",
         "description": "通过迅雷添加磁力任务。",
         "labels": "下载",
-        "version": "1.3",
+        "version": "1.4",
         "icon": "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png",
         "author": "liqman",
         "level": 1,
         "history": {
+            "v1.4": "提升版本号",
             "v1.3": "修复磁力中递归文件无法下载Bug",
             "v1.2": "优化逻辑，修复Bug",
             "v1.1": "修复掉登陆Bug",
