@@ -14,7 +14,7 @@ class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
     plugin_desc = "通过迅雷添加磁力任务。"
     plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png"
-    plugin_version = "1.3"
+    plugin_version = "1.4"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
     plugin_config_prefix = "xunleidownloader_"
@@ -231,6 +231,13 @@ class XunleiDownloader(_PluginBase):
                                     "type": "info",
                                     "variant": "tonal",
                                     "text": "迅雷Docker地址 : 格式为 http://192.168.1.200:4321 , 不要保留最后的/"
+                                },
+                            },{
+                                "component": "VAlert",
+                                "props": {
+                                    "type": "info",
+                                    "variant": "tonal",
+                                    "text": "过滤体积不建议设置过大，10M以内基本可过滤掉一些广告，具体根据需求酌情增减"
                                 },
                             },{
                                 "component": "VAlert",
