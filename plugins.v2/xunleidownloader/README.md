@@ -24,7 +24,7 @@
 ## 常见问题
 
 1. **如何获取 Authorization\file_id？**
-   - 登录迅雷 Docker 后台，按 F12 打开开发者工具，切换到 Network，迅雷网页右上角点击“新增任务”，抓取链接“https://ip:port/webman/3rdparty/pan-xunlei-com/index.cgi/drive/v1/files?space=xxxxx”，查看请求即可获取。
+   - 登录迅雷 Docker 后台，按 F12 打开开发者工具，切换到 Network，迅雷网页右上角点击“新增任务”，抓取链接 "https://ip:port/webman/3rdparty/pan-xunlei-com/index.cgi/drive/v1/files?space=xxxxx"，查看请求即可获取。
 
 ## 抓包说明
 1. 找到链接形如 https://ip:port/webman/3rdparty/pan-xunlei-com/index.cgi/drive/v1/files?space=xxxxx
