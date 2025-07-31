@@ -13,8 +13,8 @@
 ## 使用说明
 
 1. 部署并启动 [cnk3x/xunlei Docker 项目](https://github.com/cnk3x/xunlei)。
-2. 登录迅雷 Docker 后台，F12 抓包获取Authorization参数。
-3. 在 MoviePilot 插件面板中填写上述参数已经迅雷Docker登录账号名及密码，保存。
+2. 登录迅雷 Docker 后台，F12 抓包获取Authorization\file_id参数。
+3. 在 MoviePilot 插件面板中填写上述参数，保存。
 4. 通过以下方式下载磁力链接，保存到迅雷默认保存路径：
    - 在插件配置页面输入磁力链接
    - 使用`/xl`命令，如：`/xl magnet:?xt=urn:btih:xxxxx`
