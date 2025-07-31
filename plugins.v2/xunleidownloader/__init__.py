@@ -14,7 +14,7 @@ class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
     plugin_desc = "通过迅雷添加磁力任务。"
     plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png"
-    plugin_version = "1.2"
+    plugin_version = "1.3"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
     plugin_config_prefix = "xunleidownloader_"
@@ -390,14 +390,28 @@ class XunleiDownloader(_PluginBase):
                 return False
 
             # 2. 提取和筛选文件信息
-            logger.info("步骤 2/3: 筛选文件...")
+            logger.info("步骤 2/3: 提取并筛选文件...")
+            
+            def _get_all_files_recursive(items: List[Dict]) -> List[Dict]:
+                """递归获取所有文件"""
+                file_list = []
+                for item in items:
+                    if item.get('is_dir') and 'dir' in item:
+                        file_list.extend(_get_all_files_recursive(item.get('dir', {}).get('resources', [])))
+                    elif not item.get('is_dir'):
+                        file_list.append(item)
+                return file_list
+
             resource_info = files['list']['resources'][0]
             file_name = resource_info.get('name', '未知任务')
-            resources = resource_info.get('dir', {}).get('resources', [])
             
+            # 磁力链接可能包含多个文件/目录，或只是一个文件。递归获取所有文件。
+            all_files_in_torrent = _get_all_files_recursive(files['list']['resources'])
+
             logger.info(f"种子名称: {file_name}")
+            logger.info(f"共发现 {len(all_files_in_torrent)} 个文件。")
             logger.info("文件列表:")
-            
+
             indices = []
             filtered_resources = []
             total_size = 0
@@ -408,21 +422,27 @@ class XunleiDownloader(_PluginBase):
                 filter_size_mb = int(self._filter_size)
                 filter_size_bytes = filter_size_mb * 1024 * 1024
                 filter_size_mb_str = self._filter_size
-                logger.info(f"将过滤小于或等于 {filter_size_mb_str} MB 的文件。")
+                logger.info(f"将过滤小于 {filter_size_mb_str} MB 的文件。")
             else:
-                logger.info("未设置或无效的过滤大小，将不过滤文件（或仅过滤大小为0的文件）。")
+                logger.info("未设置或无效的过滤大小，将不过滤文件。")
 
-            for index, resource in enumerate(resources):
+            for resource in all_files_in_torrent:
                 file_size = resource.get('file_size', 0)
                 file_size_mb = file_size / 1024 / 1024
-                logger.info(f"  - 文件名: {resource.get('name', 'N/A')}, 大小: {file_size_mb:.2f} MB")
+                file_index = resource.get('file_index')
+
+                logger.info(f"  - 文件名: {resource.get('name', 'N/A')}, 大小: {file_size_mb:.2f} MB, Index: {file_index}")
+
+                if file_index is None:
+                    logger.warning(f"    - 文件 '{resource.get('name', 'N/A')}' 缺少 file_index，无法单独选择，将跳过。")
+                    continue
                 
                 if file_size > filter_size_bytes:
-                    indices.append(str(index))
+                    indices.append(str(file_index))
                     filtered_resources.append(resource)
                     total_size += file_size
                 else:
-                    logger.info(f"  - 文件 '{resource.get('name', 'N/A')}' 已被过滤，大小 {file_size_mb:.2f} MB 小于或等于阈值 {filter_size_mb_str} MB。")
+                    logger.info(f"    - 文件 '{resource.get('name', 'N/A')}' 已被过滤，大小 {file_size_mb:.2f} MB 小于或等于阈值 {filter_size_mb_str} MB。")
 
             logger.info(f"过滤后 (大于 {filter_size_mb_str} MB) 的文件列表:")
             if not filtered_resources:
@@ -439,7 +459,7 @@ class XunleiDownloader(_PluginBase):
                     "parent_folder_id": self._file_id,
                     "url": magnet,
                     "target": self._device_id,
-                    "total_file_count": str(len(resources)),
+                    "total_file_count": str(len(all_files_in_torrent)),
                     "sub_file_index": ','.join(indices)
                 },
                 "file_name": file_name,
@@ -495,7 +515,7 @@ class XunleiDownloader(_PluginBase):
             logger.info(f"磁力链接 {args} 已成功添加到迅雷。")
             self.post_message(
                 channel=channel,
-                title="迅雷任务添加成功!",
+                title="迅雷任务添加成功！",
                 message=f"磁力链接已成功添加到下载队列。",
                 userid=userid
             )
@@ -503,7 +523,7 @@ class XunleiDownloader(_PluginBase):
             logger.error(f"磁力链接 {args} 添加到迅雷失败。")
             self.post_message(
                 channel=channel,
-                title="迅雷任务添加失败!",
+                title="迅雷任务添加失败！",
                 message="请检查插件配置和日志获取详细信息。",
                 userid=userid
             )
