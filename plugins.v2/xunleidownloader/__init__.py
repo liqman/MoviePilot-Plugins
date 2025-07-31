@@ -495,7 +495,7 @@ class XunleiDownloader(_PluginBase):
             logger.info(f"磁力链接 {args} 已成功添加到迅雷。")
             self.post_message(
                 channel=channel,
-                title="迅雷任务添加成功",
+                title="迅雷任务添加成功!",
                 message=f"磁力链接已成功添加到下载队列。",
                 userid=userid
             )
@@ -503,7 +503,7 @@ class XunleiDownloader(_PluginBase):
             logger.error(f"磁力链接 {args} 添加到迅雷失败。")
             self.post_message(
                 channel=channel,
-                title="迅雷任务添加失败",
+                title="迅雷任务添加失败!",
                 message="请检查插件配置和日志获取详细信息。",
                 userid=userid
             )
