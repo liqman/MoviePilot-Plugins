@@ -14,7 +14,7 @@ class XunleiDownloader(_PluginBase):
     plugin_name = "迅雷磁力下载"
     plugin_desc = "通过迅雷添加磁力任务。"
     plugin_icon = "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/xunlei.png"
-    plugin_version = "1.4"
+    plugin_version = "1.5"
     plugin_author = "liqman"
     author_url = "https://github.com/liqman"
     plugin_config_prefix = "xunleidownloader_"
@@ -237,13 +237,6 @@ class XunleiDownloader(_PluginBase):
                                 "props": {
                                     "type": "info",
                                     "variant": "tonal",
-                                    "text": "过滤体积不建议设置过大，10M以内基本可过滤掉一些广告，具体根据需求酌情增减"
-                                },
-                            },{
-                                "component": "VAlert",
-                                "props": {
-                                    "type": "info",
-                                    "variant": "tonal",
                                     "text": "可使用 /xl 进行命令交互, 如 /xl 磁力链接"
                                 },
                             }
@@ -422,6 +415,7 @@ class XunleiDownloader(_PluginBase):
             indices = []
             filtered_resources = []
             total_size = 0
+            # logger.info(all_files_in_torrent)
 
             filter_size_bytes = 0
             filter_size_mb_str = "0"
@@ -432,17 +426,18 @@ class XunleiDownloader(_PluginBase):
                 logger.info(f"将过滤小于 {filter_size_mb_str} MB 的文件。")
             else:
                 logger.info("未设置或无效的过滤大小，将不过滤文件。")
-
-            for resource in all_files_in_torrent:
+            
+            for index, resource in enumerate(all_files_in_torrent):
                 file_size = resource.get('file_size', 0)
                 file_size_mb = file_size / 1024 / 1024
+                
+                # 优先使用返回的 file_index，如果缺失则使用 enumerate 的索引作为备用
                 file_index = resource.get('file_index')
+                if file_index is None:
+                    logger.warning(f"文件 '{resource.get('name', 'N/A')}' 缺少 'file_index'，将使用其在文件列表中的位置 '{index}' 作为索引。")
+                    file_index = index
 
                 logger.info(f"  - 文件名: {resource.get('name', 'N/A')}, 大小: {file_size_mb:.2f} MB, Index: {file_index}")
-
-                if file_index is None:
-                    logger.warning(f"    - 文件 '{resource.get('name', 'N/A')}' 缺少 file_index，无法单独选择，将跳过。")
-                    continue
                 
                 if file_size > filter_size_bytes:
                     indices.append(str(file_index))
