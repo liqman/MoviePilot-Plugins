@@ -32,7 +32,7 @@
         "name": "AI字幕自动生成(v2)",
         "description": "使用whisper自动生成视频文件字幕,使用大模型翻译字幕成中文。",
         "labels": "字幕",
-        "version": "2.4",
+        "version": "2.5",
         "icon": "https://raw.githubusercontent.com/liqman/MoviePilot-Plugins/refs/heads/main/icons/autosubtitles.jpeg",
         "author": "liqman",
         "level": 1,
@@ -45,7 +45,8 @@
           "v2.1": "支持清除历史记录",
           "v2.2": "fix",
           "v2.3": "支持独立的大模型调用配置",
-          "v2.4": "支持ollama"
+          "v2.4": "支持ollama",
+          "v2.5": "新增faster-whisper-large-v2"
     }
   }
 }
