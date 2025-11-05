@@ -156,7 +156,7 @@ class AutoSubv2(_PluginBase):
                                               proxy=settings.PROXY if openai_proxy else None,
                                               model=openai_model, compatible=bool(compatible))
             else:
-                openai_key = config.get('openai_key'，"xxxxx")
+                openai_key = config.get('openai_key')
                 openai_url = config.get('openai_url'， "https://api.openai.com")
                 openai_proxy = config.get('openai_proxy'， False)
                 openai_model = config.get('openai_model'， "gpt-3.5-turbo")
