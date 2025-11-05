@@ -99,7 +99,7 @@ class AutoSubv2(_PluginBase):
     _ollama = None # 新增 Ollama 实例
     _use_ollama = None # 新增 Ollama 使用标志
     _enable_batch = None
-    _batch_size = None
+    _batch_size = 无
     _context_window = None
     _max_retries = None
     _enable_merge = None
@@ -1269,7 +1269,7 @@ class AutoSubv2(_PluginBase):
                                             'model': 'faster_whisper_model',
                                             'label': 'faster-whisper模型选择',
                                             'items': ['tiny'， 'base', 'small', 'medium',
-                                                      'large-v3'，
+                                                      'large-v3',
                                                       {'title': 'large-v2',
                                                        'value': 'Systran/faster-whisper-large-v2'},
                                                       {'title': 'large-v3-turbo',
