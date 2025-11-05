@@ -1272,8 +1272,6 @@ class AutoSubv2(_PluginBase):
                                                       'large-v3',
                                                       {'title': 'large-v2',
                                                        'value': 'Systran/faster-whisper-large-v2'},
-                                                      {'title': 'large-v3-turbo',
-                                                       'value': 'deepdml/faster-whisper-large-v3-turbo-ct2'},
                                                       ]
                                         }
                                     }
