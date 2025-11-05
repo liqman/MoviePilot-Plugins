@@ -67,7 +67,7 @@ class AutoSubv2(_PluginBase):
     # 主题色
     plugin_color = "#2C4F7E"
     # 插件版本
-    plugin_version = "2.4"
+    plugin_version = "2.5"
     # 插件作者
     plugin_author = "liqman"
     # 作者主页
@@ -157,10 +157,10 @@ class AutoSubv2(_PluginBase):
                                               model=openai_model, compatible=bool(compatible))
             else:
                 openai_key = config.get('openai_key')
-                openai_url = config.get('openai_url', "https://api.openai.com")
-                openai_proxy = config.get('openai_proxy', False)
-                openai_model = config.get('openai_model', "gpt-3.5-turbo")
-                compatible = config.get('compatible', False)
+                openai_url = config.get('openai_url'， "https://api.openai.com")
+                openai_proxy = config.get('openai_proxy'， False)
+                openai_model = config.get('openai_model'， "gpt-3.5-turbo")
+                compatible = config.get('compatible'， False)
                 if not openai_key:
                     logger.warn(f"未配置openai_key，OpenAI翻译器将无法使用。")
                 self._openai = OpenAi(api_key=openai_key, api_url=openai_url,
@@ -168,8 +168,8 @@ class AutoSubv2(_PluginBase):
                                       model=openai_model, compatible=bool(compatible))
 
             # 初始化 Ollama
-            ollama_url = config.get('ollama_url', "http://localhost:11434")
-            ollama_model = config.get('ollama_model', "llama3")
+            ollama_url = config.get('ollama_url'， "http://localhost:11434")
+            ollama_model = config.get('ollama_model'， "llama3")
             self._ollama = Ollama(api_url=ollama_url, model=ollama_model)
             
             # 根据用户选择确定实际使用的翻译器
@@ -199,7 +199,7 @@ class AutoSubv2(_PluginBase):
             if not self._running:
                 self._task_queue = queue.Queue()
                 self._consumer_thread = threading.Thread(target=self._consume_tasks, daemon=True)
-                self._consumer_thread.start()
+                self._consumer_thread。start()
                 logger.info("任务队列和消费者线程已启动")
                 self._running = True
 
@@ -212,9 +212,9 @@ class AutoSubv2(_PluginBase):
             self.stop_service()
 
     def load_tasks(self) -> Dict[str, TaskItem]:
-        raw_tasks = self.get_data("tasks") or {}
+        raw_tasks = self.get_data("tasks") 或 {}
         tasks = {}
-        for task_id, task_dict in raw_tasks.items():
+        for task_id, task_dict 在 raw_tasks.items():
             try:
                 task = TaskItem(
                     task_id=task_dict["task_id"],
@@ -572,7 +572,7 @@ class AutoSubv2(_PluginBase):
 
         # 优先返回符合语言要求的外部字幕
         def get_sub_path():
-            video_dir, _ = os.path.split(video_file)
+            video_dir, _ = os.path。split(video_file)
             return os.path.join(video_dir, exist_sub_name)
 
         extract_subtitle = False
@@ -605,7 +605,7 @@ class AutoSubv2(_PluginBase):
             inner_sub_lang = iso639.to_iso639_1(inner_sub_lang) \
                 if (inner_sub_lang and iso639.find(inner_sub_lang) and iso639.to_iso639_1(inner_sub_lang)) else 'und'
             extracted_sub_path = f"{subtitle_file}.{inner_sub_lang}.srt"
-            Ffmpeg().extract_subtitle_from_video(video_file, extracted_sub_path, subtitle_index)
+            Ffmpeg()。extract_subtitle_from_video(video_file, extracted_sub_path, subtitle_index)
             logger.info(f"提取字幕完成：{extracted_sub_path}")
             return True, inner_sub_lang, extracted_sub_path
         # 使用asr音轨识别字幕
@@ -860,13 +860,13 @@ class AutoSubv2(_PluginBase):
 
     def __get_context(self, all_subs: list, target_indices: List[int], is_batch: bool) -> str:
         """通用上下文获取方法"""
-        min_idx = max(0, min(target_indices) - self._context_window)
+        min_idx = max(0， min(target_indices) - self._context_window)
         max_idx = min(len(all_subs) - 1, max(target_indices) + self._context_window) if is_batch else min(
             target_indices)
 
         context = []
-        for idx in range(min_idx, max_idx + 1):
-            status = "[待译]" if idx in target_indices else ""
+        for idx 在 range(min_idx, max_idx + 1):
+            status = "[待译]" if idx 在 target_indices else ""
             content = all_subs[idx].content.replace('\n', ' ').strip()
             context.append(f"{status}{content}")
 
@@ -879,14 +879,14 @@ class AutoSubv2(_PluginBase):
         return [self.__process_single(all_subs, item) for item in items]
 
     def __translate_to_zh(self, text: str, context: str = None) -> (bool, str):
-        if self._event.is_set():
+        if self._event。is_set():
             raise UserInterruptException(f"用户中断当前任务")
         
         if self._use_ollama: # 根据 _use_ollama 标志选择翻译器
             if not self._ollama:
                 logger.error("Ollama翻译器未初始化，无法进行翻译。")
-                return False, "Ollama翻译器未初始化。"
-            return self._ollama.translate_to_zh(text, context)
+                return False， "Ollama翻译器未初始化。"
+            return self._ollama。translate_to_zh(text, context)
         else:
             if not self._openai:
                 logger.error("OpenAI翻译器未初始化，无法进行翻译。")
@@ -897,7 +897,7 @@ class AutoSubv2(_PluginBase):
         """批量处理逻辑"""
         indices = [all_subs.index(item) for item in batch]
         context = self.__get_context(all_subs, indices, is_batch=True) if self._context_window > 0 else None
-        batch_text = '\n'.join([item.content for item in batch])
+        batch_text = '\n'。join([item.content for item in batch])
 
         try:
             ret, result = self.__translate_to_zh(batch_text, context)
@@ -908,7 +908,7 @@ class AutoSubv2(_PluginBase):
             if len(translated) != len(batch):
                 raise Exception(f"批次行数不匹配 {len(translated)}/{len(batch)}")
 
-            for item, trans in zip(batch, translated):
+            for item, trans 在 zip(batch, translated):
                 item.content = f"{trans}\n{item.content}"
             self._stats['batch_success'] += len(batch)
             return batch
@@ -919,7 +919,7 @@ class AutoSubv2(_PluginBase):
 
     def __process_single(self, all_subs: List[srt.Subtitle], item: srt.Subtitle) -> srt.Subtitle:
         """单条处理逻辑"""
-        for _ in range(self._max_retries):
+        for _ 在 range(self._max_retries):
             idx = all_subs.index(item)
             context = self.__get_context(all_subs, [idx], is_batch=False) if self._context_window > 0 else None
             success, trans = self.__translate_to_zh(item.content, context)
@@ -1064,10 +1064,10 @@ class AutoSubv2(_PluginBase):
                 prefer_langs = ['en', 'eng']
                 strict = False
             elif self._translate_preference == "english_only":
-                prefer_langs = ['en', 'eng']
+                prefer_langs = ['en'， 'eng']
                 strict = True
             else:
-                prefer_langs = None
+                prefer_langs = 无
                 strict = False
 
         exist, lang, _ = self.__external_subtitle_exists(video_file, prefer_langs, strict=strict)
@@ -1079,7 +1079,7 @@ class AutoSubv2(_PluginBase):
             return False
         ret, subtitle_index, subtitle_lang = self.__get_video_prefer_subtitle(video_meta, prefer_lang=prefer_langs,
                                                                               only_srt=False)
-        if ret and subtitle_lang in prefer_langs:
+        if ret 和 subtitle_lang 在 prefer_langs:
             return True
 
         return False
@@ -1102,8 +1102,8 @@ class AutoSubv2(_PluginBase):
                                     {
                                         'component': 'VSwitch',
                                         'props': {
-                                            'model': 'enabled',
-                                            'label': '启用插件',
+                                            'model': 'enabled'，
+                                            'label': '启用插件'，
                                             'color': 'primary'
                                         }
                                     }
@@ -1219,57 +1219,59 @@ class AutoSubv2(_PluginBase):
                                             'label': '字幕源语言偏好',
                                             'hint': '小语种视频存在多语言字幕/音轨时，优先选择哪种语言用于翻译',
                                             'items': [
-                                                {'title': '仅英文', 'value': 'english_only'},
+                                                {'title': '仅英文'， 'value': 'english_only'},
                                                 {'title': '英文优先', 'value': 'english_first'},
                                                 {'title': '原音优先', 'value': 'origin_first'}
                                             ]
                                         }
                                     }
                                 ]
-                            },
+                            }，
                             {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 4},
+                                'component': 'VCol'，
+                                'props': {'cols': 12， 'md': 4}，
                                 'content': [
                                     {
-                                        'component': 'VSwitch',
+                                        'component': 'VSwitch'，
                                         'props': {
                                             'model': 'translate_zh',
-                                            'label': '翻译成中文',
+                                            'label': '翻译成中文'，
                                             'hint': '使用大模型翻译成中文字幕'
                                         }
                                     }
                                 ]
                             }
                         ]
-                    },
+                    }，
                     {
-                        'component': 'VRow',
+                        'component': 'VRow'，
                         'content': [
                             {
                                 'component': 'VCol',
-                                'props': {'cols': 12, 'md': 4},
+                                'props': {'cols': 12， 'md': 4}，
                                 'content': [
                                     {
                                         'component': 'VSwitch',
                                         'props': {
-                                            'model': 'enable_asr',
+                                            'model': 'enable_asr'，
                                             'label': '允许从音轨生成字幕'
                                         }
                                     }
                                 ]
-                            },
+                            }，
                             {
-                                'component': 'VCol',
-                                'props': {'cols': 12, 'md': 4, 'v-show': 'enable_asr'},
+                                'component': 'VCol'，
+                                'props': {'cols': 12， 'md': 4， 'v-show': 'enable_asr'}，
                                 'content': [
                                     {
-                                        'component': 'VSelect',
+                                        'component': 'VSelect'，
                                         'props': {
                                             'model': 'faster_whisper_model',
                                             'label': 'faster-whisper模型选择',
-                                            'items': ['tiny', 'base', 'small', 'medium',
-                                                      'large-v3',
+                                            'items': ['tiny'， 'base', 'small', 'medium',
+                                                      'large-v3'，
+                                                      {'title': 'large-v2',
+                                                       'value': 'Systran/faster-whisper-large-v2'},
                                                       {'title': 'large-v3-turbo',
                                                        'value': 'deepdml/faster-whisper-large-v3-turbo-ct2'},
                                                       ]
